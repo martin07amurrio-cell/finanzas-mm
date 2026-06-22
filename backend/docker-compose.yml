@@ -1,0 +1,24 @@
+services:
+  finanzas-mm-api:
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile
+    container_name: finanzas-mm-api
+    restart: unless-stopped
+    environment:
+      FINANZAS_DB_HOST: edith-postgres
+      FINANZAS_DB_PORT: "5432"
+      FINANZAS_DB_NAME: finanzas_mm
+      FINANZAS_DB_USER: finanzas_mm
+      FINANZAS_DB_PASSWORD_FILE: /secrets/postgres_password
+      CORS_ORIGINS: "*"
+    volumes:
+      - /opt/jarvis/secrets/finanzas-mm:/secrets:ro
+    ports:
+      - "127.0.0.1:8020:8000"
+    networks:
+      - jarvis-net
+
+networks:
+  jarvis-net:
+    external: true
