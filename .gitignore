@@ -8,3 +8,5 @@ functions/.env
 functions/lib/
 firebase-service-account.json
 *.log
+__pycache__/
+*.pyc
