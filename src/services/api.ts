@@ -1,49 +1,42 @@
-import { db } from '../lib/firebase'
-import {
-  collection, getDocs, addDoc, doc, getDoc,
-  updateDoc, deleteDoc, query, orderBy
-} from 'firebase/firestore'
 import type { Account, Category, Transaction, User } from '../types/database'
 
 export const DEFAULT_USD_RATE = 1000
 
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
+
+async function apiGet<T>(path: string): Promise<T> {
+  const response = await fetch(`${API_BASE_URL}${path}`)
+
+  if (!response.ok) {
+    throw new Error(`Error al consultar API Finanzas MM: ${response.status}`)
+  }
+
+  return response.json() as Promise<T>
+}
+
+function throwReadOnlyError(): never {
+  throw new Error(
+    'El backend PostgreSQL está en modo solo lectura. Las operaciones de alta, edición y borrado se habilitarán después de validar el frontend.'
+  )
+}
+
 export async function getUsers(): Promise<User[]> {
-  const snap = await getDocs(collection(db, 'users'))
-  return snap.docs.map(d => ({ id: d.id, ...d.data() } as User))
+  return apiGet<User[]>('/api/users')
 }
 
 export async function getAccounts(): Promise<Account[]> {
-  const snap = await getDocs(query(collection(db, 'accounts'), orderBy('name')))
-  return snap.docs.map(d => ({ id: d.id, ...d.data() } as Account))
+  return apiGet<Account[]>('/api/accounts')
 }
 
 export async function getCategories(): Promise<Category[]> {
-  const snap = await getDocs(query(collection(db, 'categories'), orderBy('name')))
-  return snap.docs.map(d => ({ id: d.id, ...d.data() } as Category))
+  return apiGet<Category[]>('/api/categories')
 }
 
 export async function getTransactions(): Promise<Transaction[]> {
-  const [txSnap, catSnap, accSnap, userSnap] = await Promise.all([
-    getDocs(query(collection(db, 'transactions'), orderBy('transaction_date', 'desc'))),
-    getDocs(collection(db, 'categories')),
-    getDocs(collection(db, 'accounts')),
-    getDocs(collection(db, 'users')),
-  ])
-
-  const catMap = new Map(catSnap.docs.map(d => [d.id, { id: d.id, ...d.data() } as Category]))
-  const accMap = new Map(accSnap.docs.map(d => [d.id, { id: d.id, ...d.data() } as Account]))
-  const userMap = new Map(userSnap.docs.map(d => [d.id, { id: d.id, ...d.data() } as User]))
-
-  return txSnap.docs.map(d => {
-    const tx = { id: d.id, ...d.data() } as Transaction
-    tx.category = catMap.get(tx.category_id)
-    tx.account = accMap.get(tx.account_id)
-    tx.user = userMap.get(tx.user_id)
-    return tx
-  })
+  return apiGet<Transaction[]>('/api/transactions')
 }
 
-export async function createTransaction(tx: {
+export async function createTransaction(_tx: {
   type: 'gasto' | 'ingreso'
   amount: number
   currency: 'ARS' | 'USD'
@@ -53,87 +46,49 @@ export async function createTransaction(tx: {
   user_id: string
   transaction_date?: string
 }): Promise<Transaction> {
-  const accRef = doc(db, 'accounts', tx.account_id)
-  const accSnap = await getDoc(accRef)
-  if (!accSnap.exists()) throw new Error('No se pudo encontrar la cuenta especificada.')
-
-  const currentBalance = Number(accSnap.data().current_balance)
-  if (tx.type === 'gasto' && currentBalance < tx.amount) {
-    throw new Error(`Saldo insuficiente. La cuenta tiene $${currentBalance.toLocaleString('es-AR')} y el movimiento es por $${tx.amount.toLocaleString('es-AR')}.`)
-  }
-
-  const txRef = await addDoc(collection(db, 'transactions'), {
-    type: tx.type,
-    amount: tx.amount,
-    currency: tx.currency,
-    description: tx.description || null,
-    category_id: tx.category_id,
-    account_id: tx.account_id,
-    user_id: tx.user_id,
-    transaction_date: tx.transaction_date || new Date().toISOString(),
-  })
-
-  const amountChange = tx.type === 'ingreso' ? tx.amount : -tx.amount
-  await updateDoc(accRef, {
-    current_balance: Number(accSnap.data().current_balance) + amountChange
-  })
-
-  const newSnap = await getDoc(txRef)
-  return { id: newSnap.id, ...newSnap.data() } as Transaction
+  throwReadOnlyError()
 }
 
-export async function deleteTransaction(id: string): Promise<void> {
-  const txRef = doc(db, 'transactions', id)
-  const txSnap = await getDoc(txRef)
-  if (!txSnap.exists()) throw new Error('No se pudo encontrar la transacción para eliminar.')
-  const tx = txSnap.data()
-
-  const accRef = doc(db, 'accounts', tx.account_id)
-  const accSnap = await getDoc(accRef)
-  if (!accSnap.exists()) throw new Error('No se pudo encontrar la cuenta asociada.')
-
-  const amountChange = tx.type === 'ingreso' ? -tx.amount : tx.amount
-  await updateDoc(accRef, {
-    current_balance: Number(accSnap.data().current_balance) + amountChange
-  })
-  await deleteDoc(txRef)
+export async function deleteTransaction(_id: string): Promise<void> {
+  throwReadOnlyError()
 }
 
-export async function createAccount(acc: {
+export async function createAccount(_acc: {
   name: string
   type: string
   currency: 'ARS' | 'USD'
   owner_user_id: string
   current_balance: number
 }): Promise<Account> {
-  const ref = await addDoc(collection(db, 'accounts'), acc)
-  return { id: ref.id, created_at: new Date().toISOString(), ...acc }
+  throwReadOnlyError()
 }
 
-export async function updateAccount(id: string, data: { name: string; type: string }): Promise<void> {
-  await updateDoc(doc(db, 'accounts', id), data)
+export async function updateAccount(_id: string, _data: { name: string; type: string }): Promise<void> {
+  throwReadOnlyError()
 }
 
-export async function deleteAccount(id: string): Promise<void> {
-  await deleteDoc(doc(db, 'accounts', id))
+export async function deleteAccount(_id: string): Promise<void> {
+  throwReadOnlyError()
 }
 
-export async function createCategory(cat: {
+export async function createCategory(_cat: {
   name: string
   type: 'gasto' | 'ingreso'
   color: string
   icon: string
 }): Promise<Category> {
-  const ref = await addDoc(collection(db, 'categories'), cat)
-  return { id: ref.id, created_at: new Date().toISOString(), ...cat }
+  throwReadOnlyError()
 }
 
-export async function updateCategory(id: string, data: { name: string; type: 'gasto' | 'ingreso' | 'reserva'; color: string; icon: string }): Promise<void> {
-  await updateDoc(doc(db, 'categories', id), data)
+export async function updateCategory(
+  _id: string,
+  _data: { name: string; type: 'gasto' | 'ingreso' | 'reserva'; color: string; icon: string }
+): Promise<void> {
+  throwReadOnlyError()
 }
 
-export async function deleteCategory(id: string): Promise<void> {
-  await deleteDoc(doc(db, 'categories', id))
+export async function deleteCategory(_id: string): Promise<void> {
+  throwReadOnlyError()
 }
 
 const USD_RATE_KEY = 'usd_rate'
@@ -196,7 +151,6 @@ export async function fetchUsdRate(force = false): Promise<number> {
       return current.venta
     }
 
-    // fallback a dolarapi si argentinadatos no responde bien
     const res2 = await fetch('https://dolarapi.com/v1/dolares/oficial')
     const data2 = await res2.json()
     const rate: number = data2.venta
