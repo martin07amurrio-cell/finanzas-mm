@@ -7,45 +7,69 @@ import { Cargar } from './pages/cargar/Cargar'
 import { Reportes } from './pages/reportes/Reportes'
 import { Mas } from './pages/mas/Mas'
 import { Navbar } from './components/layout/Navbar'
-import { getUsers, fetchUsdRate } from './services/api'
-import type { User } from './types/database'
+import { loginUser, fetchUsdRate } from './services/api'
 
 type AppState = 'user-selection' | 'pin-entry' | 'dashboard'
+type AppUserName = 'Martín' | 'Micaela'
+
+function isAppUserName(value: unknown): value is AppUserName {
+  return value === 'Martín' || value === 'Micaela'
+}
 
 function App() {
   const [state, setState] = useState<AppState>('user-selection')
   const [activeTab, setActiveTab] = useState('inicio')
-  const [selectedUser, setSelectedUser] = useState<'Martín' | 'Micaela' | null>(null)
+  const [selectedUser, setSelectedUser] = useState<AppUserName | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [users, setUsers] = useState<User[]>([])
 
-  // Carga los usuarios una sola vez al iniciar — la verificación del PIN es local, sin red
   useEffect(() => {
     const savedUser = localStorage.getItem('auth_user')
-    if (savedUser) {
-      const user = JSON.parse(savedUser)
-      setSelectedUser(user.name)
-      setState('dashboard')
+    const savedToken = localStorage.getItem('auth_token')
+
+    if (savedUser && savedToken) {
+      try {
+        const user = JSON.parse(savedUser)
+        if (isAppUserName(user.name)) {
+          setSelectedUser(user.name)
+          setState('dashboard')
+        }
+      } catch {
+        localStorage.removeItem('auth_user')
+        localStorage.removeItem('auth_token')
+      }
     }
 
-    getUsers().then(data => setUsers(data)).catch(() => {})
     fetchUsdRate().catch(() => {})
   }, [])
 
-  const handleUserSelect = (user: 'Martín' | 'Micaela') => {
+  const handleUserSelect = (user: AppUserName) => {
     setSelectedUser(user)
     setState('pin-entry')
     setError(null)
   }
 
-  const handlePinComplete = (pin: string) => {
-    const match = users.find(u => u.name === selectedUser && u.pin_hash === pin)
-    if (match) {
+  const handlePinComplete = async (pin: string) => {
+    if (!selectedUser) return
+
+    try {
+      setError(null)
+      const session = await loginUser(selectedUser, pin)
+      localStorage.setItem('auth_user', JSON.stringify(session.user))
+      localStorage.setItem('auth_token', session.token)
       setState('dashboard')
-      localStorage.setItem('auth_user', JSON.stringify(match))
-    } else {
+    } catch {
+      localStorage.removeItem('auth_user')
+      localStorage.removeItem('auth_token')
       setError('PIN incorrecto. Intenta de nuevo.')
     }
+  }
+
+  const handleLogout = () => {
+    localStorage.removeItem('auth_user')
+    localStorage.removeItem('auth_token')
+    setSelectedUser(null)
+    setActiveTab('inicio')
+    setState('user-selection')
   }
 
   return (
@@ -56,9 +80,9 @@ function App() {
         )}
 
         {state === 'pin-entry' && selectedUser && (
-          <PinEntry 
-            userName={selectedUser} 
-            onBack={() => setState('user-selection')} 
+          <PinEntry
+            userName={selectedUser}
+            onBack={() => setState('user-selection')}
             onComplete={handlePinComplete}
             error={error}
           />
@@ -66,18 +90,13 @@ function App() {
 
         {state === 'dashboard' && (
           <div className="w-full flex flex-col">
-             {activeTab === 'inicio' && <Dashboard onNavigateToTab={setActiveTab} />}
-             {activeTab === 'movimientos' && <Movimientos />}
-             {activeTab === 'cargar' && <Cargar onNavigateToTab={setActiveTab} />}
-             {activeTab === 'reportes' && <Reportes />}
-             {activeTab === 'mas' && (
-               <Mas 
-                 onLogout={() => {
-                   localStorage.removeItem('auth_user')
-                   setState('user-selection')
-                 }} 
-               />
-             )}
+            {activeTab === 'inicio' && <Dashboard onNavigateToTab={setActiveTab} />}
+            {activeTab === 'movimientos' && <Movimientos />}
+            {activeTab === 'cargar' && <Cargar onNavigateToTab={setActiveTab} />}
+            {activeTab === 'reportes' && <Reportes />}
+            {activeTab === 'mas' && (
+              <Mas onLogout={handleLogout} />
+            )}
           </div>
         )}
       </main>
@@ -85,7 +104,6 @@ function App() {
       {state === 'dashboard' && (
         <Navbar activeTab={activeTab} onTabChange={setActiveTab} />
       )}
-
     </div>
   )
 }

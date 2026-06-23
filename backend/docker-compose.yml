@@ -11,6 +11,7 @@ services:
       FINANZAS_DB_NAME: finanzas_mm
       FINANZAS_DB_USER: finanzas_mm
       FINANZAS_DB_PASSWORD_FILE: /secrets/postgres_password
+      FINANZAS_AUTH_SECRET_FILE: /secrets/auth_secret
       CORS_ORIGINS: "*"
     volumes:
       - /opt/jarvis/secrets/finanzas-mm:/secrets:ro

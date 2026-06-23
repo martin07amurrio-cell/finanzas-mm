@@ -4,20 +4,114 @@ export const DEFAULT_USD_RATE = 1000
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
 
+export type AuthSession = {
+  token: string
+  user: User
+}
+
+function getAuthToken(): string | null {
+  return localStorage.getItem('auth_token')
+}
+
+function authHeaders(includeJson = false): Record<string, string> {
+  const headers: Record<string, string> = {}
+
+  if (includeJson) {
+    headers['Content-Type'] = 'application/json'
+  }
+
+  const token = getAuthToken()
+  if (token) {
+    headers['X-Finanzas-Token'] = token
+  }
+
+  return headers
+}
+
+
+function clearInvalidSession(): never {
+  localStorage.removeItem('auth_user')
+  localStorage.removeItem('auth_token')
+  window.location.reload()
+  throw new Error('Sesión vencida. Volvé a iniciar sesión.')
+}
+
+function handleUnauthorized(response: Response): void {
+  if (response.status === 401) {
+    clearInvalidSession()
+  }
+}
+
 async function apiGet<T>(path: string): Promise<T> {
-  const response = await fetch(`${API_BASE_URL}${path}`)
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    credentials: 'same-origin',
+    headers: authHeaders(),
+  })
 
   if (!response.ok) {
+    handleUnauthorized(response)
     throw new Error(`Error al consultar API Finanzas MM: ${response.status}`)
   }
 
   return response.json() as Promise<T>
 }
 
+async function apiPost<T>(path: string, body: unknown): Promise<T> {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: authHeaders(true),
+    body: JSON.stringify(body),
+  })
+
+  if (!response.ok) {
+    handleUnauthorized(response)
+    const detail = await response.text().catch(() => '')
+    throw new Error(`Error al guardar en API Finanzas MM: ${response.status}${detail ? ` - ${detail}` : ''}`)
+  }
+
+  return response.json() as Promise<T>
+}
+
+async function apiPostPublic<T>(path: string, body: unknown): Promise<T> {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  })
+
+  if (!response.ok) {
+    throw new Error(`Error de autenticación: ${response.status}`)
+  }
+
+  return response.json() as Promise<T>
+}
+
+async function apiDelete(path: string): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    method: 'DELETE',
+    credentials: 'same-origin',
+    headers: authHeaders(),
+  })
+
+  if (!response.ok) {
+    handleUnauthorized(response)
+    const detail = await response.text().catch(() => '')
+    throw new Error(`Error al borrar en API Finanzas MM: ${response.status}${detail ? ` - ${detail}` : ''}`)
+  }
+}
+
 function throwReadOnlyError(): never {
   throw new Error(
-    'El backend PostgreSQL está en modo solo lectura. Las operaciones de alta, edición y borrado se habilitarán después de validar el frontend.'
+    'Esta operación todavía no está habilitada en PostgreSQL. Primero se habilitan movimientos y después cuentas/categorías.'
   )
+}
+
+export async function loginUser(name: 'Martín' | 'Micaela', pin: string): Promise<AuthSession> {
+  return apiPostPublic<AuthSession>('/api/auth/login', { name, pin })
 }
 
 export async function getUsers(): Promise<User[]> {
@@ -36,7 +130,7 @@ export async function getTransactions(): Promise<Transaction[]> {
   return apiGet<Transaction[]>('/api/transactions')
 }
 
-export async function createTransaction(_tx: {
+export async function createTransaction(tx: {
   type: 'gasto' | 'ingreso'
   amount: number
   currency: 'ARS' | 'USD'
@@ -46,11 +140,11 @@ export async function createTransaction(_tx: {
   user_id: string
   transaction_date?: string
 }): Promise<Transaction> {
-  throwReadOnlyError()
+  return apiPost<Transaction>('/api/transactions', tx)
 }
 
-export async function deleteTransaction(_id: string): Promise<void> {
-  throwReadOnlyError()
+export async function deleteTransaction(id: string): Promise<void> {
+  return apiDelete(`/api/transactions/${encodeURIComponent(id)}`)
 }
 
 export async function createAccount(_acc: {
