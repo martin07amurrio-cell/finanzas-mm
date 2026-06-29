@@ -7,6 +7,16 @@ interface MasProps {
   onLogout: () => void
 }
 
+const categoryTypeLabels: Record<Category['type'], string> = {
+  gasto: 'Gasto',
+  ingreso: 'Ingreso',
+  reserva: 'Reserva',
+}
+
+function getErrorMessage(err: unknown, fallback: string): string {
+  return err instanceof Error && err.message ? err.message : fallback
+}
+
 export function Mas({ onLogout }: MasProps) {
   const [accounts, setAccounts] = useState<Account[]>([])
   const [categories, setCategories] = useState<Category[]>([])
@@ -21,7 +31,7 @@ export function Mas({ onLogout }: MasProps) {
 
   // Nuevo formulario de categoría
   const [newCatName, setNewCatName] = useState('')
-  const [newCatType, setNewCatType] = useState<'gasto' | 'ingreso'>('gasto')
+  const [newCatType, setNewCatType] = useState<Category['type']>('gasto')
   const [newCatColor, setNewCatColor] = useState('#3498DB')
   const [newCatIcon, setNewCatIcon] = useState('Tag')
   const [showCatForm, setShowCatForm] = useState(false)
@@ -39,7 +49,7 @@ export function Mas({ onLogout }: MasProps) {
   const [editingCatId, setEditingCatId] = useState<string | null>(null)
   const [deletingCatId, setDeletingCatId] = useState<string | null>(null)
   const [editCatName, setEditCatName] = useState('')
-  const [editCatType, setEditCatType] = useState<'gasto' | 'ingreso' | 'reserva'>('gasto')
+  const [editCatType, setEditCatType] = useState<Category['type']>('gasto')
   const [editCatColor, setEditCatColor] = useState('#3498DB')
   const [editCatIcon, setEditCatIcon] = useState('Tag')
   const [usdRate, setUsdRateState] = useState<number>(getUsdRate())
@@ -108,7 +118,7 @@ export function Mas({ onLogout }: MasProps) {
       setShowCatForm(false)
       setCatError(null)
     } catch (err) {
-      setCatError('Error al crear la categoría. Intenta de nuevo.')
+      setCatError(getErrorMessage(err, 'Error al crear la categoría. Intenta de nuevo.'))
     }
   }
 
@@ -141,6 +151,7 @@ export function Mas({ onLogout }: MasProps) {
   }
 
   const startEditCat = (cat: Category) => {
+    setCatError(null)
     setEditingCatId(cat.id)
     setEditCatName(cat.name)
     setEditCatType(cat.type)
@@ -152,11 +163,11 @@ export function Mas({ onLogout }: MasProps) {
   const handleUpdateCat = async (id: string) => {
     if (!editCatName.trim()) return
     try {
-      await updateCategory(id, { name: editCatName.trim(), type: editCatType, color: editCatColor, icon: editCatIcon })
-      setCategories(prev => prev.map(c => c.id === id ? { ...c, name: editCatName.trim(), type: editCatType, color: editCatColor, icon: editCatIcon } : c))
+      const updatedCat = await updateCategory(id, { name: editCatName.trim(), type: editCatType, color: editCatColor, icon: editCatIcon })
+      setCategories(prev => prev.map(c => c.id === id ? updatedCat : c))
       setEditingCatId(null)
-    } catch {
-      setCatError('Error al guardar los cambios.')
+    } catch (err) {
+      setCatError(getErrorMessage(err, 'Error al guardar los cambios.'))
     }
   }
 
@@ -165,8 +176,8 @@ export function Mas({ onLogout }: MasProps) {
       await deleteCategory(id)
       setCategories(prev => prev.filter(c => c.id !== id))
       setDeletingCatId(null)
-    } catch {
-      setCatError('Error al eliminar la categoría.')
+    } catch (err) {
+      setCatError(getErrorMessage(err, 'Error al eliminar la categoría.'))
     }
   }
 
@@ -443,7 +454,9 @@ export function Mas({ onLogout }: MasProps) {
                     <select
                       value={editCatType}
                       onChange={e => setEditCatType(e.target.value as any)}
-                      className="p-2 bg-card text-xs rounded-xl border border-border"
+                      disabled={cat.is_default}
+                      className="p-2 bg-card text-xs rounded-xl border border-border disabled:opacity-60"
+                      title={cat.is_default ? 'No se puede cambiar el tipo de una categoría predeterminada' : undefined}
                     >
                       <option value="gasto">Gasto</option>
                       <option value="ingreso">Ingreso</option>
@@ -492,13 +505,28 @@ export function Mas({ onLogout }: MasProps) {
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-full" style={{ backgroundColor: cat.color || '#95A5A6' }} />
                     <span className="text-sm font-semibold">{cat.name}</span>
-                    <span className="text-[10px] text-muted-foreground uppercase">{cat.type === 'gasto' ? 'Gasto' : 'Ingreso'}</span>
+                    <span className="text-[10px] text-muted-foreground uppercase">{categoryTypeLabels[cat.type]}</span>
+                    {cat.is_default && (
+                      <span className="text-[10px] text-muted-foreground uppercase">Predeterminada</span>
+                    )}
                   </div>
                   <div className="flex items-center gap-2">
                     <button onClick={() => startEditCat(cat)} className="p-1.5 text-muted-foreground hover:text-primary active:scale-90 transition-all">
                       <Pencil className="w-3.5 h-3.5" />
                     </button>
-                    <button onClick={() => { setDeletingCatId(cat.id); setEditingCatId(null) }} className="p-1.5 text-muted-foreground hover:text-destructive active:scale-90 transition-all">
+                    <button
+                      onClick={() => {
+                        if (cat.is_default) {
+                          setCatError('No se puede eliminar una categoría predeterminada.')
+                          return
+                        }
+                        setDeletingCatId(cat.id)
+                        setEditingCatId(null)
+                      }}
+                      className="p-1.5 text-muted-foreground hover:text-destructive active:scale-90 transition-all disabled:opacity-40 disabled:hover:text-muted-foreground"
+                      disabled={cat.is_default}
+                      title={cat.is_default ? 'No se puede eliminar una categoría predeterminada' : 'Eliminar categoría'}
+                    >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>

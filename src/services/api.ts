@@ -42,6 +42,20 @@ function handleUnauthorized(response: Response): void {
   }
 }
 
+async function readApiError(response: Response): Promise<string> {
+  const text = await response.text().catch(() => '')
+  if (!text) return `Error ${response.status}`
+
+  try {
+    const parsed = JSON.parse(text)
+    if (typeof parsed.detail === 'string') return parsed.detail
+  } catch {
+    // Si no es JSON, devolvemos el cuerpo tal como vino del servidor.
+  }
+
+  return text
+}
+
 async function apiGet<T>(path: string): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     credentials: 'same-origin',
@@ -50,7 +64,7 @@ async function apiGet<T>(path: string): Promise<T> {
 
   if (!response.ok) {
     handleUnauthorized(response)
-    throw new Error(`Error al consultar API Finanzas MM: ${response.status}`)
+    throw new Error(await readApiError(response))
   }
 
   return response.json() as Promise<T>
@@ -66,8 +80,23 @@ async function apiPost<T>(path: string, body: unknown): Promise<T> {
 
   if (!response.ok) {
     handleUnauthorized(response)
-    const detail = await response.text().catch(() => '')
-    throw new Error(`Error al guardar en API Finanzas MM: ${response.status}${detail ? ` - ${detail}` : ''}`)
+    throw new Error(await readApiError(response))
+  }
+
+  return response.json() as Promise<T>
+}
+
+async function apiPut<T>(path: string, body: unknown): Promise<T> {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    method: 'PUT',
+    credentials: 'same-origin',
+    headers: authHeaders(true),
+    body: JSON.stringify(body),
+  })
+
+  if (!response.ok) {
+    handleUnauthorized(response)
+    throw new Error(await readApiError(response))
   }
 
   return response.json() as Promise<T>
@@ -99,8 +128,7 @@ async function apiDelete(path: string): Promise<void> {
 
   if (!response.ok) {
     handleUnauthorized(response)
-    const detail = await response.text().catch(() => '')
-    throw new Error(`Error al borrar en API Finanzas MM: ${response.status}${detail ? ` - ${detail}` : ''}`)
+    throw new Error(await readApiError(response))
   }
 }
 
@@ -167,22 +195,22 @@ export async function deleteAccount(_id: string): Promise<void> {
 
 export async function createCategory(_cat: {
   name: string
-  type: 'gasto' | 'ingreso'
+  type: 'gasto' | 'ingreso' | 'reserva'
   color: string
   icon: string
 }): Promise<Category> {
-  throwReadOnlyError()
+  return apiPost<Category>('/api/categories', _cat)
 }
 
 export async function updateCategory(
-  _id: string,
-  _data: { name: string; type: 'gasto' | 'ingreso' | 'reserva'; color: string; icon: string }
-): Promise<void> {
-  throwReadOnlyError()
+  id: string,
+  data: { name: string; type: 'gasto' | 'ingreso' | 'reserva'; color: string; icon: string }
+): Promise<Category> {
+  return apiPut<Category>(`/api/categories/${encodeURIComponent(id)}`, data)
 }
 
-export async function deleteCategory(_id: string): Promise<void> {
-  throwReadOnlyError()
+export async function deleteCategory(id: string): Promise<void> {
+  return apiDelete(`/api/categories/${encodeURIComponent(id)}`)
 }
 
 const USD_RATE_KEY = 'usd_rate'

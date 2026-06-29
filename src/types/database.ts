@@ -22,6 +22,8 @@ export type Category = {
   type: 'gasto' | 'ingreso' | 'reserva'
   color: string | null
   icon: string | null
+  is_default: boolean
+  is_active: boolean
   created_at: string
 }
 

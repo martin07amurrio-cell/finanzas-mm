@@ -54,6 +54,20 @@ class TransactionCreate(BaseModel):
     transaction_date: str | None = None
 
 
+class CategoryCreate(BaseModel):
+    name: str
+    type: Literal["gasto", "ingreso", "reserva"]
+    color: str | None = None
+    icon: str | None = None
+
+
+class CategoryUpdate(BaseModel):
+    name: str
+    type: Literal["gasto", "ingreso", "reserva"]
+    color: str | None = None
+    icon: str | None = None
+
+
 def read_password() -> str:
     return Path(DB_PASSWORD_FILE).read_text(encoding="utf-8").strip()
 
@@ -121,6 +135,65 @@ def parse_transaction_date(value: str | None) -> datetime:
     return parsed
 
 
+def clean_optional_text(value: str | None) -> str | None:
+    if value is None:
+        return None
+
+    cleaned = value.strip()
+    return cleaned if cleaned else None
+
+
+def clean_required_text(value: str, field_name: str) -> str:
+    cleaned = value.strip()
+    if not cleaned:
+        raise HTTPException(status_code=400, detail=f"{field_name} es obligatorio")
+
+    return cleaned
+
+
+def fetch_active_category(cur, category_id: str) -> dict[str, Any] | None:
+    cur.execute(
+        """
+        SELECT id, name, type, color, icon, is_default, is_active, created_at
+        FROM categories
+        WHERE id = %s
+            AND is_active IS TRUE;
+        """,
+        (category_id,),
+    )
+    rows = rows_to_dicts(cur)
+    return rows[0] if rows else None
+
+
+def count_category_transactions(cur, category_id: str) -> int:
+    cur.execute(
+        "SELECT COUNT(*) FROM transactions WHERE category_id = %s;",
+        (category_id,),
+    )
+    return cur.fetchone()[0]
+
+
+def fetch_reserve_category_balance(cur, category_id: str) -> Decimal:
+    cur.execute(
+        """
+        SELECT COALESCE(
+            SUM(
+                CASE
+                    WHEN type = 'gasto' THEN amount
+                    WHEN type = 'ingreso' THEN -amount
+                    ELSE 0
+                END
+            ),
+            0
+        )
+        FROM transactions
+        WHERE category_id = %s;
+        """,
+        (category_id,),
+    )
+    return cur.fetchone()[0]
+
+
 def transaction_from_row(row: dict[str, Any]) -> dict[str, Any]:
     return {
         "id": row["id"],
@@ -139,6 +212,8 @@ def transaction_from_row(row: dict[str, Any]) -> dict[str, Any]:
             "type": row["category_type"],
             "color": row["category_color"],
             "icon": row["category_icon"],
+            "is_default": row["category_is_default"],
+            "is_active": row["category_is_active"],
         } if row["category_id"] else None,
         "account": {
             "id": row["account_id"],
@@ -175,6 +250,8 @@ def fetch_transaction(cur, transaction_id: str) -> dict[str, Any] | None:
             c.type AS category_type,
             c.color AS category_color,
             c.icon AS category_icon,
+            c.is_default AS category_is_default,
+            c.is_active AS category_is_active,
 
             a.name AS account_name,
             a.type AS account_type,
@@ -319,13 +396,133 @@ def get_categories(_auth: dict = Depends(require_auth)):
         with conn.cursor() as cur:
             cur.execute(
                 """
-                SELECT id, name, type, color, icon, is_active, created_at
+                SELECT id, name, type, color, icon, is_default, is_active, created_at
                 FROM categories
                 WHERE is_active IS TRUE
                 ORDER BY name ASC;
                 """
             )
             return rows_to_dicts(cur)
+
+
+@app.post("/api/categories", status_code=status.HTTP_201_CREATED)
+def create_category(payload: CategoryCreate, _auth: dict = Depends(require_auth)):
+    category_id = str(uuid4())
+    name = clean_required_text(payload.name, "El nombre de la categoría")
+    color = clean_optional_text(payload.color)
+    icon = clean_optional_text(payload.icon)
+
+    with connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                INSERT INTO categories (
+                    id,
+                    name,
+                    type,
+                    color,
+                    icon,
+                    is_default,
+                    is_active,
+                    created_at,
+                    updated_at
+                )
+                VALUES (%s, %s, %s, %s, %s, FALSE, TRUE, now(), now())
+                RETURNING id, name, type, color, icon, is_default, is_active, created_at;
+                """,
+                (category_id, name, payload.type, color, icon),
+            )
+            rows = rows_to_dicts(cur)
+
+    return rows[0]
+
+
+@app.put("/api/categories/{category_id}")
+def update_category(category_id: str, payload: CategoryUpdate, _auth: dict = Depends(require_auth)):
+    name = clean_required_text(payload.name, "El nombre de la categoría")
+    color = clean_optional_text(payload.color)
+    icon = clean_optional_text(payload.icon)
+
+    with connect() as conn:
+        with conn.cursor() as cur:
+            current = fetch_active_category(cur, category_id)
+            if not current:
+                raise HTTPException(status_code=404, detail="Categoría no encontrada")
+
+            type_changed = payload.type != current["type"]
+            if type_changed and current["is_default"]:
+                raise HTTPException(
+                    status_code=409,
+                    detail="No se puede cambiar el tipo de una categoría predeterminada",
+                )
+
+            if type_changed and count_category_transactions(cur, category_id) > 0:
+                raise HTTPException(
+                    status_code=409,
+                    detail="No se puede cambiar el tipo de una categoría con movimientos asociados",
+                )
+
+            cur.execute(
+                """
+                UPDATE categories
+                SET name = %s,
+                    type = %s,
+                    color = %s,
+                    icon = %s,
+                    updated_at = now()
+                WHERE id = %s
+                    AND is_active IS TRUE
+                RETURNING id, name, type, color, icon, is_default, is_active, created_at;
+                """,
+                (name, payload.type, color, icon, category_id),
+            )
+            rows = rows_to_dicts(cur)
+
+    if not rows:
+        raise HTTPException(status_code=404, detail="Categoría no encontrada")
+
+    return rows[0]
+
+
+@app.delete("/api/categories/{category_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_category(category_id: str, _auth: dict = Depends(require_auth)):
+    with connect() as conn:
+        with conn.cursor() as cur:
+            current = fetch_active_category(cur, category_id)
+            if not current:
+                raise HTTPException(status_code=404, detail="Categoría no encontrada")
+
+            if current["is_default"]:
+                raise HTTPException(
+                    status_code=409,
+                    detail="No se puede eliminar una categoría predeterminada",
+                )
+
+            if current["type"] == "reserva":
+                reserve_balance = fetch_reserve_category_balance(cur, category_id)
+                if reserve_balance != 0:
+                    raise HTTPException(
+                        status_code=409,
+                        detail="No se puede eliminar una categoría de reserva con saldo distinto de cero",
+                    )
+
+            cur.execute(
+                """
+                UPDATE categories
+                SET is_active = FALSE,
+                    updated_at = now()
+                WHERE id = %s
+                    AND is_active IS TRUE
+                RETURNING id;
+                """,
+                (category_id,),
+            )
+            deleted = cur.fetchone()
+
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Categoría no encontrada")
+
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @app.get("/api/transactions")
@@ -350,6 +547,8 @@ def get_transactions(_auth: dict = Depends(require_auth)):
                     c.type AS category_type,
                     c.color AS category_color,
                     c.icon AS category_icon,
+                    c.is_default AS category_is_default,
+                    c.is_active AS category_is_active,
 
                     a.name AS account_name,
                     a.type AS account_type,
