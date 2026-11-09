@@ -21,7 +21,7 @@ def main():
     parser = argparse.ArgumentParser(description="Inicializar usuario familiar (PIN con hash)")
     parser.add_argument("--user", required=True, choices=("Martín", "Micaela"))
     args = parser.parse_args()
-    pin = getpass.getpass(f"PIN nuevo de {args.user} (6 a 12 dígitos): ")
+    pin = getpass.getpass(f"PIN nuevo de {args.user} (6 dígitos): ")
     confirmation = getpass.getpass("Confirmar PIN: ")
     if pin != confirmation:
         raise SystemExit("Los PIN no coinciden")
