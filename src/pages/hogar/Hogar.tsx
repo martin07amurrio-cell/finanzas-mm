@@ -40,6 +40,7 @@ export function Hogar({ initialSection = 'agenda', onNavigate }: {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [form, setForm] = useState<EntryInput | null>(null)
   const [saving, setSaving] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -158,11 +159,12 @@ export function Hogar({ initialSection = 'agenda', onNavigate }: {
             </div>
           </div>
           <button type="button" aria-label={`Editar ${entry.title}`} onClick={() => startEdit(entry)} className="self-start rounded-lg p-1.5 text-muted-foreground"><Pencil size={16}/></button>
-          <button type="button" aria-label={`Eliminar ${entry.title}`} disabled={saving} onClick={() => { if (window.confirm(`¿Eliminar "${entry.title}"?`)) void action(() => deleteHousehold(entry.id)) }} className="self-start rounded-lg p-1.5 text-destructive"><Trash2 size={16}/></button>
+          <button type="button" aria-label={`Eliminar ${entry.title}`} disabled={saving} onClick={() => { setConfirmDelete(entry.id) }} className="self-start rounded-lg p-1.5 text-destructive"><Trash2 size={16}/></button>
         </div>
         {entry.details && <p className="whitespace-pre-wrap text-xs text-muted-foreground">{entry.details}</p>}
         {entry.notes && <p className="whitespace-pre-wrap text-xs text-muted-foreground">{entry.notes}</p>}
         {entry.target && <div className="space-y-1"><div className="flex justify-between text-xs text-muted-foreground"><span>Progreso</span><span>{entry.progress || 0} / {entry.target}</span></div><div className="h-2 rounded-full bg-muted"><div className="h-2 rounded-full bg-primary" style={{ width: `${Math.min(100, (entry.progress || 0) / entry.target * 100)}%` }}/></div></div>}
+        {confirmDelete === entry.id && <div className="flex items-center justify-between gap-2 rounded-xl bg-destructive/10 p-3 text-xs"><span>¿Eliminar este elemento?</span><button type="button" disabled={saving} onClick={() => { setConfirmDelete(null); void action(() => deleteHousehold(entry.id)) }} className="font-semibold text-destructive">Eliminar</button><button type="button" onClick={() => setConfirmDelete(null)} className="font-semibold">Cancelar</button></div>}
         <div className="flex flex-wrap items-center gap-2">
           {section === 'compras' && entry.status !== 'hecho'
             ? <button type="button" disabled={saving} onClick={() => void action(() => purchaseHousehold(entry.id))} className="flex items-center gap-1 rounded-lg bg-primary/10 px-3 py-2 text-xs font-semibold text-primary"><Check size={15}/> Comprado → Despensa</button>
