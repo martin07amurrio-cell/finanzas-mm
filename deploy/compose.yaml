@@ -38,7 +38,7 @@ services:
       FINANZAS_DB_PASSWORD_FILE: /run/secrets/db_password
       FINANZAS_AUTH_SECRET_FILE: /run/secrets/auth_secret
       FINANZAS_TOKEN_TTL_SECONDS: "604800"
-      CORS_ORIGINS: "https://hogar.nerohm.com.ar"
+      CORS_ORIGINS: "https://hogarchito.nerohm.com.ar"
       TZ: America/Argentina/Cordoba
     secrets:
       - db_password
