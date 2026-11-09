@@ -10,6 +10,8 @@ from fastapi import Depends, FastAPI, HTTPException, Request, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
+from app.hogar import router as hogar_router
+
 from app.auth import (
     check_login_rate_limit,
     clear_login_failures,
@@ -27,7 +29,8 @@ DB_USER = os.getenv("FINANZAS_DB_USER", "finanzas_mm")
 DB_PASSWORD_FILE = os.getenv("FINANZAS_DB_PASSWORD_FILE", "/secrets/postgres_password")
 
 
-app = FastAPI(title="Finanzas MM API", version="0.3.0")
+app = FastAPI(title="Finanzas MM API", version="0.4.0")
+app.include_router(hogar_router)
 
 app.add_middleware(
     CORSMiddleware,
