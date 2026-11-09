@@ -50,7 +50,13 @@ export function Hogar({ initialSection = 'agenda', onNavigate }: {
     finally { setLoading(false) }
   }, [section])
 
-  useEffect(() => { void load() }, [load])
+  useEffect(() => {
+    let active = true
+    listHousehold(section)
+      .then(data => { if (active) { setItems(data); setLoading(false) } })
+      .catch(err => { if (active) { setError(err instanceof Error ? err.message : 'No se pudo cargar'); setLoading(false) } })
+    return () => { active = false }
+  }, [section])
 
   const startEdit = (entry?: HouseholdEntry) => {
     setEditingId(entry?.id || null)
@@ -99,7 +105,7 @@ export function Hogar({ initialSection = 'agenda', onNavigate }: {
     </header>
     <div className="grid grid-cols-2 gap-2">
       {MODULES.map(m => <button key={m.id} type="button"
-        onClick={() => { setSection(m.id); setForm(null) }}
+        onClick={() => { setSection(m.id); setForm(null); setLoading(true); setError('') }}
         className={`flex items-start gap-2 rounded-2xl border p-3 text-left transition-colors ${section === m.id ? 'border-primary bg-primary/10' : 'border-border bg-card'}`}>
         <m.icon size={18} className={section === m.id ? 'text-primary shrink-0' : 'text-muted-foreground shrink-0'} />
         <span className="min-w-0"><span className="block text-sm font-semibold">{m.label}</span><span className="text-[10px] text-muted-foreground">{m.hint}</span></span>
