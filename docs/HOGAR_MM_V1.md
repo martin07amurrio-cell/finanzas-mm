@@ -1,30 +1,55 @@
-# Hogar M&M — primera implementación
+# Hogar M&M — primera versión desde cero
 
-Rama: `desarrollo/hogar-mm`. No despliega a producción ni altera finanzas existentes.
+## Estado y propósito
 
-## Incluido
-- Inicio familiar con resumen de pendientes y accesos rápidos.
-- Agenda, tareas, supermercado, despensa, recetas, menú, limpieza y objetivos.
-- CRUD con sesiones existentes mediante `/api/hogar/items`.
-- Compras: acción explícita «Comprado» incorpora producto a despensa en la misma transacción, sin crear gasto (el importe se carga por Finanzas).
-- Limpieza: completar una rutina periódica calcula la próxima fecha; no crea tareas duplicadas.
-- Objetivos: progreso y meta numéricos.
-- Mantiene Inicio financiero, Movimientos, Cargar, Reportes y Más. El dashboard financiero queda accesible como «Finanzas».
+La aplicación anterior **no está desplegada ni tiene datos financieros que conservar**. El repositorio de Finanzas M&M se reutiliza como base para una aplicación familiar nueva para Martín y Micaela. No migrar datos ficticios, PIN antiguos ni configuraciones de Firebase heredadas.
 
-## Pendiente antes de desplegar
-1. Hacer backup de la base PostgreSQL.
-2. Aplicar una vez `backend/migrations/001_hogar_mm.sql` sobre la base de `finanzas_mm`. La API nueva falla si no se hace.
-3. Desplegar API FastAPI y frontend juntos (o indicar `VITE_API_BASE_URL` con CORS restringido al dominio autorizado).
-4. Ejecutar `npm ci && npm run build && npm run lint` y `python -m compileall -q backend/app`; realizar pruebas de autenticación y datos desde dos sesiones.
-5. No publicar credenciales ni datos de producción en GitHub. El repositorio público contiene documentación histórica con PIN; rotar los PIN e inspeccionar las reglas actuales de Firestore.
-6. Verificar copias de seguridad, permisos, HTTPS, recursos del VPS y autorización de usuarios antes de usar datos familiares reales.
+El desarrollo está en la rama `desarrollo/hogar-mm`. No ha sido publicado ni verificado contra una instancia real de PostgreSQL.
 
-## Límites conocidos
-- Recetas y menú admiten texto de ingredientes y preparación; no calculan faltantes automáticamente.
-- La agenda todavía no sincroniza Google Calendar.
-- Limpieza por días, sin reglas complejas de recurrencia.
-- Datos compartidos entre ambos usuarios autenticados; no hay control de acceso por área.
-- El inicio muestra accesos a Hogar; todos llevan al módulo de Hogar desde donde se elige la sección.
-- La creación de compra no genera automáticamente un gasto financiero; esto evita importes inventados.
-- El dashboard financiero conserva la lógica anterior.
-- El proyecto no está publicado ni verificado con un entorno PostgreSQL real desde este cambio.
+## Funcionalidades incluidas
+
+- Inicio del hogar con resumen de pendientes y próximas actividades.
+- Agenda y tareas asignables a Martín, Micaela o ambos.
+- Lista de supermercado y despensa: «Comprado» traslada la cantidad a despensa en una transacción de base de datos.
+- Recetas y menú como registros con ingredientes e instrucciones en texto.
+- Limpieza con recurrencias sencillas en días.
+- Objetivos con avance y valor objetivo.
+- Finanzas: conserva el código de saldos, ingresos, gastos y reportes para adaptarlo luego a la estructura familiar.
+- API nueva con sesiones existentes, usando el backend FastAPI y PostgreSQL.
+
+## Inicialización en una base vacía
+
+1. Crear **una base de datos PostgreSQL privada** para Hogar M&M y un usuario SQL de privilegios mínimos. No compartir usuarios ni credenciales con JARVIS/D3S.
+2. Configurar en el entorno seguro `FINANZAS_DB_HOST`, `FINANZAS_DB_NAME`, `FINANZAS_DB_USER`, `FINANZAS_DB_PASSWORD_FILE` y `FINANZAS_AUTH_SECRET_FILE`. Generar un secreto largo nuevo; no incluirlo en Git.
+3. Ejecutar `backend/schema.sql` y luego `backend/migrations/001_hogar_mm.sql`.
+4. Configurar **nuevos PIN exclusivos** desde terminal, nunca desde el chat:
+   `PYTHONPATH=backend python backend/scripts/bootstrap_user.py --user "Martín"`
+   `PYTHONPATH=backend python backend/scripts/bootstrap_user.py --user "Micaela"`
+   El script solicita PIN de 6 a 12 dígitos y los almacena con PBKDF2-SHA256 + sal.
+5. Probar API y frontend sin datos reales. Evitar crear o usar usuarios demo con PIN conocido.
+6. Configurar HTTPS y el dominio `finanzas.nerohm.com.ar` o la dirección definitiva que se elija.
+
+## Validaciones
+
+- `npm ci && npm run build`
+- `npx eslint src/pages/hogar src/services/hogar.ts`
+- `PYTHONPATH=backend python -m unittest discover -s backend/tests`
+- `python -m compileall -q backend/app backend/scripts`
+- Pruebas manuales con ambos usuarios: inicio de sesión, gastos, compras → despensa, menú, rutina periódica, eliminación y cierre de sesión.
+
+El lint general original tiene errores anteriores a este desarrollo; no declarar el proyecto entero libre de errores mientras no se corrijan.
+
+## Seguridad antes de publicar
+
+- El repositorio público contiene documentación anterior con PIN débiles y reglas antiguas de Firestore. No usar los PIN anteriores. Eliminar contenido sensible y revisar el historial de Git si corresponde.
+- Los módulos nuevos comparten datos entre los dos usuarios autorizados. No se implementaron permisos por sección ni auditoría de modificaciones.
+- Revisar restricciones CORS, cookies/tokens, caducidad y protección contra fuerza bruta antes de exponer la API a internet.
+- Mantener copias de seguridad periódicas de PostgreSQL una vez que se utilicen datos reales.
+
+## Pendiente para futuras iteraciones
+
+- Carga guiada de cuentas y categorías desde la app.
+- Sugerencias automáticas de recetas según despensa, descontar alimentos al cocinar y fechas de vencimiento.
+- Planificación inteligente semanal en función de los turnos cambiantes.
+- Integración de EDITH y calendario externo.
+- Recordatorios y notificaciones.
