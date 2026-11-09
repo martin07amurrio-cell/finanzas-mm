@@ -123,8 +123,8 @@ PIN_ITERATIONS = 600_000
 
 
 def hash_pin(pin: str) -> str:
-    if not (pin.isascii() and pin.isdigit() and 6 <= len(pin) <= 12):
-        raise ValueError("El PIN debe tener entre 6 y 12 dígitos")
+    if not (pin.isascii() and pin.isdigit() and len(pin) == 6):
+        raise ValueError("El PIN debe tener exactamente 6 dígitos")
     salt = os.urandom(16)
     digest = hashlib.pbkdf2_hmac("sha256", pin.encode("utf-8"), salt, PIN_ITERATIONS)
     return f"pbkdf2_sha256${PIN_ITERATIONS}${salt.hex()}${digest.hex()}"
