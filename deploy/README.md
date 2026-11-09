@@ -9,7 +9,7 @@ La configuración es **autónoma**: Docker Compose crea PostgreSQL, API FastAPI 
 - Confirmar con el administrador de D3S que el VPS tiene capacidad libre y que existe un proxy HTTPS (Caddy/Nginx/Traefik) que pueda servir un host adicional, sin alterar los demás.
 - Docker Engine + Docker Compose plugin, Git y OpenSSL instalados en el VPS.
 - Acceso SSH administrativo a la máquina. No compartir claves, contraseñas ni PIN por ChatGPT.
-- Control DNS de `nerohm.com.ar`. Reservar el host `hogar.nerohm.com.ar` y apuntarlo a la IP pública del VPS de D3S.
+- Control DNS de `nerohm.com.ar`. Reservar el host `hogarchito.nerohm.com.ar` y apuntarlo a la IP pública del VPS de D3S.
 - Verificar que el puerto TCP `8035` del host no esté ocupado (`ss -ltn | grep ':8035 '`). Cambiar `HOGAR_HTTP_PORT` si es necesario.
 
 ## 1. Preparar instalación limpia
@@ -49,12 +49,12 @@ Cada persona elige un PIN de seis dígitos distinto; el script lo solicita de ma
 
 ## 3. Exponer únicamente HTTPS
 
-La web escucha **solo** en `127.0.0.1:8035` del VPS; la API y PostgreSQL no publican puertos del host. El proxy HTTPS de D3S debe enrutar el host `hogar.nerohm.com.ar` a `http://127.0.0.1:8035`.
+La web escucha **solo** en `127.0.0.1:8035` del VPS; la API y PostgreSQL no publican puertos del host. El proxy HTTPS de D3S debe enrutar el host `hogarchito.nerohm.com.ar` a `http://127.0.0.1:8035`.
 
 Si D3S usa **Caddy**, el administrador puede incorporar este bloque al Caddyfile activo (sin sustituir el resto de hosts):
 
 ```caddyfile
-hogar.nerohm.com.ar {
+hogarchito.nerohm.com.ar {
     reverse_proxy 127.0.0.1:8035
 }
 ```
@@ -69,7 +69,7 @@ En el proveedor DNS de NEROHM, crear un registro `A` para `hogar` apuntando a la
 cd /opt/hogar-mm/app
 docker compose --env-file deploy/.env -f deploy/compose.yaml ps
 curl -fsS http://127.0.0.1:8035/health
-curl -I https://hogar.nerohm.com.ar/
+curl -I https://hogarchito.nerohm.com.ar/
 ```
 
 Probar inicio de sesión con ambos usuarios, altas y edición de tareas, compra→despensa, recetas, limpieza y carga de cuentas e ingresos/gastos. La API requiere sesión; no suponer que la compilación de GitHub valida comportamiento con PostgreSQL real.
@@ -107,7 +107,7 @@ Agregar un trabajo diario supervisado y cifrar/copiar respaldos a un destino **f
    ```
    Si la estructura cambió desde la primera versión, utilizar una estrategia de migración de esquema y restauración verificada, en vez de ejecutar el ejemplo sin ajustes.
 6. Comprobar recuentos e integridad de datos, login, API y frontend en el nuevo VPS (idealmente usando un host temporal de prueba protegido).
-7. Cambiar **solo** el registro DNS `A` de `hogar.nerohm.com.ar` a la IP de Hostinger. Esperar propagación; mantener D3S sin permitir nuevas escrituras hasta confirmar el corte definitivo para evitar divergencias.
+7. Cambiar **solo** el registro DNS `A` de `hogarchito.nerohm.com.ar` a la IP de Hostinger. Esperar propagación; mantener D3S sin permitir nuevas escrituras hasta confirmar el corte definitivo para evitar divergencias.
 8. Una vez confirmada la operación y las copias, retirar el servicio temporal de D3S de forma controlada. No eliminar volúmenes de forma anticipada.
 
 El subdominio público permanece igual antes y después de migrar, de modo que los enlaces de los celulares no cambian.
