@@ -117,5 +117,34 @@ def clear_login_failures(request: Request, user_name: str) -> None:
     _login_attempts.pop(key, None)
 
 
+# Los PIN nuevos se almacenan como hashes PBKDF2 con sal aleatoria por usuario.
+# La compatibilidad con PIN en texto plano se elimina: no hay usuarios activos que migrar.
+PIN_ITERATIONS = 600_000
+
+
+def hash_pin(pin: str) -> str:
+    if not (pin.isascii() and pin.isdigit() and 6 <= len(pin) <= 12):
+        raise ValueError("El PIN debe tener entre 6 y 12 dígitos")
+    salt = os.urandom(16)
+    digest = hashlib.pbkdf2_hmac("sha256", pin.encode("utf-8"), salt, PIN_ITERATIONS)
+    return f"pbkdf2_sha256${PIN_ITERATIONS}${salt.hex()}${digest.hex()}"
+
+
 def verify_pin(stored_pin: str | None, provided_pin: str | None) -> bool:
-    return hmac.compare_digest(str(stored_pin or ""), str(provided_pin or ""))
+    if not stored_pin or not provided_pin:
+        return False
+    try:
+        algorithm, iterations, salt_hex, expected_hex = stored_pin.split("$")
+        if algorithm != "pbkdf2_sha256":
+            return False
+        rounds = int(iterations)
+        if rounds < 100_000 or rounds > 1_000_000:
+            return False
+        salt = bytes.fromhex(salt_hex)
+        expected = bytes.fromhex(expected_hex)
+        if len(salt) != 16 or len(expected) != 32:
+            return False
+        digest = hashlib.pbkdf2_hmac("sha256", provided_pin.encode("utf-8"), salt, rounds)
+        return hmac.compare_digest(digest, expected)
+    except (ValueError, TypeError):
+        return False
