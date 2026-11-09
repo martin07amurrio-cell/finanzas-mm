@@ -132,12 +132,6 @@ async function apiDelete(path: string): Promise<void> {
   }
 }
 
-function throwReadOnlyError(): never {
-  throw new Error(
-    'Esta operación todavía no está habilitada en PostgreSQL. Primero se habilitan movimientos y después cuentas/categorías.'
-  )
-}
-
 export async function loginUser(name: 'Martín' | 'Micaela', pin: string): Promise<AuthSession> {
   return apiPostPublic<AuthSession>('/api/auth/login', { name, pin })
 }
@@ -175,22 +169,22 @@ export async function deleteTransaction(id: string): Promise<void> {
   return apiDelete(`/api/transactions/${encodeURIComponent(id)}`)
 }
 
-export async function createAccount(_acc: {
+export async function createAccount(acc: {
   name: string
   type: string
   currency: 'ARS' | 'USD'
   owner_user_id: string
   current_balance: number
 }): Promise<Account> {
-  throwReadOnlyError()
+  return apiPost<Account>('/api/accounts', acc)
 }
 
-export async function updateAccount(_id: string, _data: { name: string; type: string }): Promise<void> {
-  throwReadOnlyError()
+export async function updateAccount(id: string, data: { name: string; type: string }): Promise<Account> {
+  return apiPut<Account>(`/api/accounts/${encodeURIComponent(id)}`, data)
 }
 
-export async function deleteAccount(_id: string): Promise<void> {
-  throwReadOnlyError()
+export async function deleteAccount(id: string): Promise<void> {
+  return apiDelete(`/api/accounts/${encodeURIComponent(id)}`)
 }
 
 export async function createCategory(_cat: {
