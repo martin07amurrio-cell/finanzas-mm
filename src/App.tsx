@@ -93,7 +93,7 @@ function App() {
         {state === 'dashboard' && (
           <div className="w-full flex flex-col">
             {activeTab === 'inicio' && <InicioHogar onNavigate={setActiveTab} />}
-            {activeTab === 'hogar' && <Hogar onNavigate={setActiveTab} />}
+            {(activeTab === 'hogar' || activeTab.startsWith('hogar:')) && <Hogar key={activeTab} initialSection={activeTab.startsWith('hogar:') ? activeTab.slice(6) as import('./services/hogar').Section : 'agenda'} onNavigate={setActiveTab} />}
             {activeTab === 'finanzas' && <Dashboard onNavigateToTab={setActiveTab} />}
             {activeTab === 'movimientos' && <Movimientos />}
             {activeTab === 'cargar' && <Cargar onNavigateToTab={setActiveTab} />}
@@ -106,7 +106,7 @@ function App() {
       </main>
 
       {state === 'dashboard' && (
-        <Navbar activeTab={activeTab} onTabChange={setActiveTab} />
+        <Navbar activeTab={activeTab.startsWith('hogar:') ? 'hogar' : activeTab} onTabChange={setActiveTab} />
       )}
     </div>
   )
