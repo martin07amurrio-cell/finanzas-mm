@@ -7,6 +7,8 @@ import { Cargar } from './pages/cargar/Cargar'
 import { Reportes } from './pages/reportes/Reportes'
 import { Mas } from './pages/mas/Mas'
 import { Navbar } from './components/layout/Navbar'
+import { Hogar } from './pages/hogar/Hogar'
+import { InicioHogar } from './pages/hogar/InicioHogar'
 import { loginUser, fetchUsdRate } from './services/api'
 
 type AppState = 'user-selection' | 'pin-entry' | 'dashboard'
@@ -90,7 +92,9 @@ function App() {
 
         {state === 'dashboard' && (
           <div className="w-full flex flex-col">
-            {activeTab === 'inicio' && <Dashboard onNavigateToTab={setActiveTab} />}
+            {activeTab === 'inicio' && <InicioHogar onNavigate={setActiveTab} />}
+            {activeTab === 'hogar' && <Hogar onNavigate={setActiveTab} />}
+            {activeTab === 'finanzas' && <Dashboard onNavigateToTab={setActiveTab} />}
             {activeTab === 'movimientos' && <Movimientos />}
             {activeTab === 'cargar' && <Cargar onNavigateToTab={setActiveTab} />}
             {activeTab === 'reportes' && <Reportes />}
