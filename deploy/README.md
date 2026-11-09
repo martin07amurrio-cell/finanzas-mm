@@ -39,9 +39,9 @@ Usar la terminal interactiva del VPS:
 
 ```bash
 cd /opt/hogar-mm/app
-docker compose --env-file deploy/.env -f deploy/compose.yaml exec -it api \
+docker compose --env-file deploy/.env -f deploy/compose.yaml exec api \
   python /app/scripts/bootstrap_user.py --user "Martín"
-docker compose --env-file deploy/.env -f deploy/compose.yaml exec -it api \
+docker compose --env-file deploy/.env -f deploy/compose.yaml exec api \
   python /app/scripts/bootstrap_user.py --user "Micaela"
 ```
 
@@ -102,7 +102,7 @@ Agregar un trabajo diario supervisado y cifrar/copiar respaldos a un destino **f
 5. En el nuevo VPS, con PostgreSQL inicializado con el **mismo esquema** y sin datos previos:
    ```bash
    docker compose --env-file deploy/.env -f deploy/compose.yaml exec -T db \
-     pg_restore -U hogar_mm -d hogar_mm --data-only --no-owner --no-privileges \
+     pg_restore --exit-on-error -U hogar_mm -d hogar_mm --data-only --no-owner --no-privileges \
      < /ruta/segura/hogar-mm-migracion-data.dump
    ```
    Si la estructura cambió desde la primera versión, utilizar una estrategia de migración de esquema y restauración verificada, en vez de ejecutar el ejemplo sin ajustes.
