@@ -36,7 +36,7 @@ export function InicioHogar({ onNavigate }: Props) {
       {upcoming.length ? upcoming.map(item => <div key={item.id} className="rounded-xl border border-border bg-card p-3 flex justify-between gap-2"><span className="text-sm font-medium">{item.title}</span><span className="text-xs text-muted-foreground shrink-0">{item.due_on ? new Date(item.due_on + 'T12:00:00').toLocaleDateString('es-AR') : 'Sin fecha'}</span></div>)
         : <p className="rounded-xl bg-card border border-border p-4 text-xs text-muted-foreground">Todavía no hay actividades. Agregalas desde Hogar.</p>}
     </section>
-    <section className="grid grid-cols-2 gap-3">{tiles.map(t => <button type="button" key={t.label} onClick={() => onNavigate('hogar')} className="rounded-2xl bg-card border border-border p-4 text-left space-y-2">
+    <section className="grid grid-cols-2 gap-3">{tiles.map(t => <button type="button" key={t.label} onClick={() => onNavigate(`hogar:${t.label === 'Comidas' ? 'menu' : t.label === 'Compras' ? 'compras' : t.label === 'Tareas' ? 'tareas' : t.label === 'Agenda' ? 'agenda' : t.label === 'Limpieza' ? 'limpieza' : 'objetivos'}`)} className="rounded-2xl bg-card border border-border p-4 text-left space-y-2">
       <t.icon size={22} className="text-primary"/><h3 className="text-sm font-semibold">{t.label}</h3><p className="text-xs text-muted-foreground">{t.subtitle}</p>
     </button>)}</section>
     <button type="button" onClick={() => onNavigate('finanzas')} className="flex w-full items-center justify-between rounded-xl border border-border bg-card p-4"><span className="flex items-center gap-2 text-sm font-semibold"><Wallet size={19} className="text-primary"/> Finanzas e ingresos/gastos</span><ChevronRight size={17}/></button>
