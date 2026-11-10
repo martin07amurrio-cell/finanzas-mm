@@ -25,7 +25,7 @@ El desarrollo está en la rama `desarrollo/hogar-mm`. No ha sido publicado ni ve
 4. Configurar **nuevos PIN exclusivos** desde terminal, nunca desde el chat:
    `PYTHONPATH=backend python backend/scripts/bootstrap_user.py --user "Martín"`
    `PYTHONPATH=backend python backend/scripts/bootstrap_user.py --user "Micaela"`
-   El script solicita PIN de 6 a 12 dígitos y los almacena con PBKDF2-SHA256 + sal.
+   El script solicita PIN de 4 dígitos y los almacena con PBKDF2-SHA256 + sal.
 5. Probar API y frontend sin datos reales. Evitar crear o usar usuarios demo con PIN conocido.
 6. Configurar HTTPS y el dominio `finanzas.nerohm.com.ar` o la dirección definitiva que se elija.
 
