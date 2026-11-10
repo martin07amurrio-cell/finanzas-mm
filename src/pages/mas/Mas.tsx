@@ -32,7 +32,7 @@ export function Mas({ onLogout }: MasProps) {
   // Nuevo formulario de categoría
   const [newCatName, setNewCatName] = useState('')
   const [newCatType, setNewCatType] = useState<Category['type']>('gasto')
-  const [newCatColor, setNewCatColor] = useState('#3498DB')
+  const [newCatColor, setNewCatColor] = useState('#8B5CF6')
   const [newCatIcon, setNewCatIcon] = useState('Tag')
   const [showCatForm, setShowCatForm] = useState(false)
 
@@ -50,7 +50,7 @@ export function Mas({ onLogout }: MasProps) {
   const [deletingCatId, setDeletingCatId] = useState<string | null>(null)
   const [editCatName, setEditCatName] = useState('')
   const [editCatType, setEditCatType] = useState<Category['type']>('gasto')
-  const [editCatColor, setEditCatColor] = useState('#3498DB')
+  const [editCatColor, setEditCatColor] = useState('#8B5CF6')
   const [editCatIcon, setEditCatIcon] = useState('Tag')
   const [usdRate, setUsdRateState] = useState<number>(getUsdRate())
   const [usdUpdatedAt, setUsdUpdatedAt] = useState<Date | null>(getUsdRateUpdatedAt())
@@ -155,7 +155,7 @@ export function Mas({ onLogout }: MasProps) {
     setEditingCatId(cat.id)
     setEditCatName(cat.name)
     setEditCatType(cat.type)
-    setEditCatColor(cat.color || '#3498DB')
+    setEditCatColor(cat.color || '#8B5CF6')
     setEditCatIcon(cat.icon || 'Tag')
     setDeletingCatId(null)
   }
@@ -503,7 +503,7 @@ export function Mas({ onLogout }: MasProps) {
               ) : (
                 <div className="p-3 flex justify-between items-center">
                   <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: cat.color || '#95A5A6' }} />
+                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: cat.color || '#A78BFA' }} />
                     <span className="text-sm font-semibold">{cat.name}</span>
                     <span className="text-[10px] text-muted-foreground uppercase">{categoryTypeLabels[cat.type]}</span>
                     {cat.is_default && (
@@ -568,7 +568,7 @@ export function Mas({ onLogout }: MasProps) {
                 <span className="text-sm font-normal text-muted-foreground ml-1">ARS</span>
               </p>
               {usdPrev.rate && (
-                <p className={`text-sm font-bold ${usdRate > usdPrev.rate ? 'text-destructive' : 'text-green-500'}`}>
+                <p className={`text-sm font-bold ${usdRate > usdPrev.rate ? 'text-destructive' : 'text-brand-violet'}`}>
                   {usdRate > usdPrev.rate ? '▲' : '▼'} {Math.abs(((usdRate - usdPrev.rate) / usdPrev.rate) * 100).toFixed(2)}%
                 </p>
               )}
