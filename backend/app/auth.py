@@ -4,6 +4,7 @@ import hmac
 import json
 import os
 import time
+import threading
 from pathlib import Path
 from typing import Annotated, Any
 
@@ -12,10 +13,11 @@ from fastapi import Header, HTTPException, Request, status
 
 AUTH_SECRET_FILE = os.getenv("FINANZAS_AUTH_SECRET_FILE", "/secrets/auth_secret")
 TOKEN_TTL_SECONDS = int(os.getenv("FINANZAS_TOKEN_TTL_SECONDS", str(60 * 60 * 24 * 30)))
-LOGIN_WINDOW_SECONDS = int(os.getenv("FINANZAS_LOGIN_WINDOW_SECONDS", "600"))
+LOGIN_WINDOW_SECONDS = int(os.getenv("FINANZAS_LOGIN_WINDOW_SECONDS", "3600"))
 LOGIN_MAX_ATTEMPTS = int(os.getenv("FINANZAS_LOGIN_MAX_ATTEMPTS", "5"))
 
 _login_attempts: dict[str, list[float]] = {}
+_login_lock = threading.Lock()
 
 
 def read_auth_secret() -> bytes:
@@ -83,38 +85,32 @@ def require_auth(
 
 
 def client_key(request: Request, user_name: str) -> str:
-    forwarded = request.headers.get("x-forwarded-for")
-    if forwarded:
-        ip = forwarded.split(",", 1)[0].strip()
-    else:
-        ip = request.client.host if request.client else "unknown"
-    return f"{ip}:{user_name}"
+    """Límite global por identidad, no por IP o X-Forwarded-For manipulable.
+
+    Solo hay dos identidades válidas; los nombres desconocidos comparten cupo
+    para que un atacante no cree infinitas entradas en memoria.
+    """
+    canonical = user_name.strip().casefold()
+    return canonical if canonical in ("martín", "micaela") else "desconocido"
 
 
 def check_login_rate_limit(request: Request, user_name: str) -> None:
+    """Reserva cada intento antes de verificar el PIN, evitando carreras triviales.
+
+    Máximo de cinco inicios de sesión por identidad y hora. El contador está
+    en memoria: no sustituye un control distribuido o un segundo factor.
+    """
     key = client_key(request, user_name)
-    now = time.time()
-    recent = [ts for ts in _login_attempts.get(key, []) if now - ts < LOGIN_WINDOW_SECONDS]
-    _login_attempts[key] = recent
-
-    if len(recent) >= LOGIN_MAX_ATTEMPTS:
-        raise HTTPException(
-            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-            detail="Demasiados intentos. Esperá unos minutos y volvé a probar.",
-        )
-
-
-def register_failed_login(request: Request, user_name: str) -> None:
-    key = client_key(request, user_name)
-    now = time.time()
-    recent = [ts for ts in _login_attempts.get(key, []) if now - ts < LOGIN_WINDOW_SECONDS]
-    recent.append(now)
-    _login_attempts[key] = recent
-
-
-def clear_login_failures(request: Request, user_name: str) -> None:
-    key = client_key(request, user_name)
-    _login_attempts.pop(key, None)
+    now = time.monotonic()
+    with _login_lock:
+        recent = [ts for ts in _login_attempts.get(key, []) if now - ts < LOGIN_WINDOW_SECONDS]
+        if len(recent) >= LOGIN_MAX_ATTEMPTS:
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail="Demasiados intentos. Volvé a probar en una hora.",
+            )
+        recent.append(now)
+        _login_attempts[key] = recent
 
 
 # Los PIN nuevos se almacenan como hashes PBKDF2 con sal aleatoria por usuario.
@@ -123,8 +119,8 @@ PIN_ITERATIONS = 600_000
 
 
 def hash_pin(pin: str) -> str:
-    if not (pin.isascii() and pin.isdigit() and len(pin) == 6):
-        raise ValueError("El PIN debe tener exactamente 6 dígitos")
+    if not (pin.isascii() and pin.isdigit() and len(pin) == 4):
+        raise ValueError("El PIN debe tener exactamente 4 dígitos")
     salt = os.urandom(16)
     digest = hashlib.pbkdf2_hmac("sha256", pin.encode("utf-8"), salt, PIN_ITERATIONS)
     return f"pbkdf2_sha256${PIN_ITERATIONS}${salt.hex()}${digest.hex()}"
