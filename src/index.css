@@ -1,34 +1,34 @@
 @import "tailwindcss";
 
-/* Hogarchito: rosa, violeta, negro y blanco.
-   Los tonos intensos se reservan para acciones; los claros, para superficies. */
+/* Hogarchito: rosa pastel, violeta, negro y blanco. */
 @theme {
   --color-brand-ink: #17121c;
   --color-brand-white: #ffffff;
-  --color-brand-rose: #ec4899;
-  --color-brand-pink: #be185d;
+  --color-brand-rose: #f9b8d7;
+  --color-brand-pink: #f4b4d2;
+  --color-brand-berry: #8d325f;
   --color-brand-violet: #6d28d9;
   --color-brand-lilac: #8b5cf6;
 
   --font-sans: "Inter", system-ui, -apple-system, sans-serif;
-  --color-background: #fffbfe;
+  --color-background: #fffcfe;
   --color-foreground: #17121c;
   --color-card: #ffffff;
   --color-card-foreground: #17121c;
   --color-popover: #ffffff;
   --color-popover-foreground: #17121c;
-  --color-primary: #be185d;
-  --color-primary-foreground: #ffffff;
-  --color-secondary: #f2e8fa;
+  --color-primary: #f4b4d2;
+  --color-primary-foreground: #17121c;
+  --color-secondary: #f7edf9;
   --color-secondary-foreground: #291437;
-  --color-muted: #f7eff9;
+  --color-muted: #faf2f9;
   --color-muted-foreground: #5b5261;
-  --color-accent: #fce7f3;
+  --color-accent: #fde9f3;
   --color-accent-foreground: #731447;
   --color-destructive: #be123c;
   --color-destructive-foreground: #ffffff;
-  --color-border: #ead8ed;
-  --color-input: #e5d3ea;
+  --color-border: #f0dce9;
+  --color-input: #ead3e4;
   --color-ring: #6d28d9;
   --radius-lg: 0.875rem;
 }
@@ -37,8 +37,8 @@
   * { @apply border-border; }
   body {
     @apply bg-background text-foreground font-sans;
-    background-image: radial-gradient(circle at 0% 0%, #fce7f3 0%, transparent 34%),
-                      radial-gradient(circle at 100% 18%, #f2e8fa 0%, transparent 31%);
+    background-image: radial-gradient(circle at 0% 0%, #ffecf6 0%, transparent 38%),
+                      radial-gradient(circle at 100% 18%, #f6efff 0%, transparent 32%);
     background-attachment: fixed;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
@@ -46,10 +46,17 @@
   button { cursor: pointer; }
   button:disabled { cursor: not-allowed; }
   :focus-visible { outline-color: var(--color-ring); outline-offset: 2px; }
-  ::selection { background-color: #f9a8d4; color: #17121c; }
+  ::selection { background-color: #f9b8d7; color: #17121c; }
 }
 
 .hogarchito-hero {
-  background: linear-gradient(125deg, #5824bc 0%, #8b5cf6 48%, #be185d 100%);
-  box-shadow: 0 14px 28px -18px rgb(109 40 217 / 55%);
+  background: linear-gradient(125deg, #fbe5f0 0%, #f6c5dd 55%, #e8d8fb 100%);
+  border: 1px solid #f1cade;
+  box-shadow: 0 14px 28px -18px rgb(180 81 137 / 25%);
+}
+
+/* Rosa pastel en superficies, texto ciruela para conservar contraste en blanco. */
+@layer utilities {
+  .text-primary, .text-brand-pink { color: #8d325f; }
+  .bg-primary.text-white, .bg-brand-pink.text-white { color: #17121c; }
 }
