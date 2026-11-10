@@ -10,11 +10,11 @@ from fastapi import Depends, FastAPI, HTTPException, Request, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
+from app.hogar import router as hogar_router
+
 from app.auth import (
     check_login_rate_limit,
-    clear_login_failures,
     create_session_token,
-    register_failed_login,
     require_auth,
     verify_pin,
 )
@@ -27,7 +27,8 @@ DB_USER = os.getenv("FINANZAS_DB_USER", "finanzas_mm")
 DB_PASSWORD_FILE = os.getenv("FINANZAS_DB_PASSWORD_FILE", "/secrets/postgres_password")
 
 
-app = FastAPI(title="Finanzas MM API", version="0.3.0")
+app = FastAPI(title="Hogarchito API", version="0.4.0")
+app.include_router(hogar_router)
 
 app.add_middleware(
     CORSMiddleware,
@@ -52,6 +53,19 @@ class TransactionCreate(BaseModel):
     account_id: str
     user_id: str
     transaction_date: str | None = None
+
+
+class AccountCreate(BaseModel):
+    name: str
+    type: Literal["cash", "bank", "fintech", "savings"] = "cash"
+    currency: Literal["ARS", "USD"] = "ARS"
+    owner_user_id: str
+    current_balance: Decimal = Decimal("0")
+
+
+class AccountUpdate(BaseModel):
+    name: str
+    type: Literal["cash", "bank", "fintech", "savings"]
 
 
 class CategoryCreate(BaseModel):
@@ -330,10 +344,7 @@ def login(payload: LoginRequest, request: Request):
             rows = rows_to_dicts(cur)
 
     if not rows or not verify_pin(rows[0].get("pin_hash"), pin):
-        register_failed_login(request, user_name)
         raise HTTPException(status_code=401, detail="Usuario o PIN incorrecto")
-
-    clear_login_failures(request, user_name)
 
     user = rows[0]
     token = create_session_token(user)
@@ -388,6 +399,68 @@ def get_accounts(_auth: dict = Depends(require_auth)):
                 """
             )
             return rows_to_dicts(cur)
+
+
+@app.post("/api/accounts", status_code=status.HTTP_201_CREATED)
+def create_account(payload: AccountCreate, auth: dict = Depends(require_auth)):
+    name = clean_required_text(payload.name, "El nombre de la cuenta")
+    if len(name) > 120:
+        raise HTTPException(status_code=422, detail="Nombre demasiado largo")
+    if payload.owner_user_id != auth["sub"]:
+        raise HTTPException(status_code=403, detail="Solo podés crear cuentas a tu nombre")
+    if not payload.current_balance.is_finite():
+        raise HTTPException(status_code=422, detail="Saldo inicial inválido")
+    if abs(payload.current_balance) > Decimal("9999999999999.99"):
+        raise HTTPException(status_code=422, detail="Saldo inicial fuera de rango")
+    account_id = str(uuid4())
+    with connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """INSERT INTO accounts (
+                   id, name, owner_user_id, type, currency, initial_balance,
+                   current_balance, is_savings_fund, is_active, created_at, updated_at
+                ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,TRUE,now(),now())
+                RETURNING id,name,owner_user_id,type,currency,initial_balance,
+                          current_balance,is_savings_fund,is_active,created_at""",
+                (account_id, name, auth["sub"], payload.type, payload.currency,
+                 payload.current_balance, payload.current_balance, payload.type == "savings"),
+            )
+            return rows_to_dicts(cur)[0]
+
+
+@app.put("/api/accounts/{account_id}")
+def update_account(account_id: str, payload: AccountUpdate, _auth: dict = Depends(require_auth)):
+    name = clean_required_text(payload.name, "El nombre de la cuenta")
+    if len(name) > 120:
+        raise HTTPException(status_code=422, detail="Nombre demasiado largo")
+    with connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """UPDATE accounts
+                   SET name=%s, type=%s, is_savings_fund=%s, updated_at=now()
+                   WHERE id=%s AND is_active IS TRUE
+                   RETURNING id,name,owner_user_id,type,currency,initial_balance,
+                             current_balance,is_savings_fund,is_active,created_at""",
+                (name, payload.type, payload.type == "savings", account_id),
+            )
+            result = rows_to_dicts(cur)
+    if not result:
+        raise HTTPException(status_code=404, detail="Cuenta no encontrada")
+    return result[0]
+
+
+@app.delete("/api/accounts/{account_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_account(account_id: str, _auth: dict = Depends(require_auth)):
+    with connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT id FROM accounts WHERE id=%s AND is_active IS TRUE FOR UPDATE", (account_id,))
+            if not cur.fetchone():
+                raise HTTPException(status_code=404, detail="Cuenta no encontrada")
+            cur.execute("SELECT EXISTS(SELECT 1 FROM transactions WHERE account_id=%s OR destination_account_id=%s)", (account_id, account_id))
+            if cur.fetchone()[0]:
+                raise HTTPException(status_code=409, detail="No se puede eliminar una cuenta con movimientos")
+            cur.execute("UPDATE accounts SET is_active=FALSE,updated_at=now() WHERE id=%s", (account_id,))
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @app.get("/api/categories")

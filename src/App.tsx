@@ -7,6 +7,8 @@ import { Cargar } from './pages/cargar/Cargar'
 import { Reportes } from './pages/reportes/Reportes'
 import { Mas } from './pages/mas/Mas'
 import { Navbar } from './components/layout/Navbar'
+import { Hogar } from './pages/hogar/Hogar'
+import { InicioHogar } from './pages/hogar/InicioHogar'
 import { loginUser, fetchUsdRate } from './services/api'
 
 type AppState = 'user-selection' | 'pin-entry' | 'dashboard'
@@ -57,10 +59,10 @@ function App() {
       localStorage.setItem('auth_user', JSON.stringify(session.user))
       localStorage.setItem('auth_token', session.token)
       setState('dashboard')
-    } catch {
+    } catch (error) {
       localStorage.removeItem('auth_user')
       localStorage.removeItem('auth_token')
-      setError('PIN incorrecto. Intenta de nuevo.')
+      setError(error instanceof Error ? error.message : 'No se pudo iniciar sesión.')
     }
   }
 
@@ -90,7 +92,9 @@ function App() {
 
         {state === 'dashboard' && (
           <div className="w-full flex flex-col">
-            {activeTab === 'inicio' && <Dashboard onNavigateToTab={setActiveTab} />}
+            {activeTab === 'inicio' && <InicioHogar onNavigate={setActiveTab} />}
+            {(activeTab === 'hogar' || activeTab.startsWith('hogar:')) && <Hogar key={activeTab} initialSection={activeTab.startsWith('hogar:') ? activeTab.slice(6) as import('./services/hogar').Section : 'agenda'} onNavigate={setActiveTab} />}
+            {activeTab === 'finanzas' && <Dashboard onNavigateToTab={setActiveTab} />}
             {activeTab === 'movimientos' && <Movimientos />}
             {activeTab === 'cargar' && <Cargar onNavigateToTab={setActiveTab} />}
             {activeTab === 'reportes' && <Reportes />}
@@ -102,7 +106,7 @@ function App() {
       </main>
 
       {state === 'dashboard' && (
-        <Navbar activeTab={activeTab} onTabChange={setActiveTab} />
+        <Navbar activeTab={activeTab.startsWith('hogar:') ? 'hogar' : activeTab} onTabChange={setActiveTab} />
       )}
     </div>
   )

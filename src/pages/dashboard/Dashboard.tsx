@@ -155,35 +155,35 @@ export function Dashboard({ onNavigateToTab }: DashboardProps) {
       {/* Grid de Resumen Mensual (Ingresos vs Gastos) */}
       <div className="grid grid-cols-2 gap-4">
         <div className="bg-card p-4 rounded-2xl border border-border space-y-2">
-          <div className="w-9 h-9 rounded-xl bg-brand-green/10 flex items-center justify-center">
-            <TrendingUp className="w-5 h-5 text-brand-green" />
+          <div className="w-9 h-9 rounded-xl bg-brand-violet/10 flex items-center justify-center">
+            <TrendingUp className="w-5 h-5 text-brand-violet" />
           </div>
           <div>
             <p className="text-muted-foreground text-xs">Ingresos de este mes</p>
-            <p className="font-bold text-brand-green">+${monthlyIncomeARS.toLocaleString('es-AR')}</p>
+            <p className="font-bold text-brand-violet">+${monthlyIncomeARS.toLocaleString('es-AR')}</p>
           </div>
         </div>
         
         <div className="bg-card p-4 rounded-2xl border border-border space-y-2">
-          <div className="w-9 h-9 rounded-xl bg-brand-coral/10 flex items-center justify-center">
-            <TrendingDown className="w-5 h-5 text-brand-coral" />
+          <div className="w-9 h-9 rounded-xl bg-brand-pink/10 flex items-center justify-center">
+            <TrendingDown className="w-5 h-5 text-brand-pink" />
           </div>
           <div>
             <p className="text-muted-foreground text-xs">Gastos de este mes</p>
-            <p className="font-bold text-brand-coral">-${monthlyExpenseARS.toLocaleString('es-AR')}</p>
+            <p className="font-bold text-brand-pink">-${monthlyExpenseARS.toLocaleString('es-AR')}</p>
           </div>
         </div>
       </div>
 
       {/* Balance neto del mes */}
-      <div className="bg-brand-green/10 border border-brand-green/20 p-4 rounded-2xl flex items-center justify-between">
+      <div className="bg-brand-violet/10 border border-brand-violet/20 p-4 rounded-2xl flex items-center justify-between">
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-full bg-brand-green flex items-center justify-center shadow-lg shadow-brand-green/20">
+          <div className="w-10 h-10 rounded-full bg-brand-violet flex items-center justify-center shadow-lg shadow-brand-violet/20">
             <PiggyBank className="w-5 h-5 text-white" />
           </div>
           <div>
-            <p className="text-xs text-brand-green/80 font-medium">Balance Neto del Mes</p>
-            <p className={`font-bold ${savingsARS >= 0 ? 'text-brand-green' : 'text-brand-coral'}`}>
+            <p className="text-xs text-brand-violet/80 font-medium">Balance Neto del Mes</p>
+            <p className={`font-bold ${savingsARS >= 0 ? 'text-brand-violet' : 'text-brand-pink'}`}>
               {savingsARS >= 0 ? '+' : ''}${savingsARS.toLocaleString('es-AR')}
             </p>
           </div>
@@ -210,7 +210,7 @@ export function Dashboard({ onNavigateToTab }: DashboardProps) {
                   <div className="w-3 h-3 rounded-full" style={{ backgroundColor: bucket.color }} />
                   <span className="text-sm font-semibold">{bucket.name}</span>
                 </div>
-                <span className={`font-bold text-sm ${bucket.balance >= 0 ? 'text-primary' : 'text-brand-coral'}`}>
+                <span className={`font-bold text-sm ${bucket.balance >= 0 ? 'text-primary' : 'text-brand-pink'}`}>
                   ${bucket.balance.toLocaleString('es-AR')}
                 </span>
               </div>
@@ -237,7 +237,7 @@ export function Dashboard({ onNavigateToTab }: DashboardProps) {
               <div className="flex items-center space-x-3">
                 <div
                   className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-white text-xs"
-                  style={{ backgroundColor: tx.category?.color || '#3498DB' }}
+                  style={{ backgroundColor: tx.category?.color || '#8B5CF6' }}
                 >
                   {tx.category?.name.charAt(0) || 'T'}
                 </div>
@@ -248,7 +248,7 @@ export function Dashboard({ onNavigateToTab }: DashboardProps) {
                   </p>
                 </div>
               </div>
-              <p className={`font-bold text-xs ${tx.type === 'ingreso' ? 'text-brand-green' : 'text-brand-coral'}`}>
+              <p className={`font-bold text-xs ${tx.type === 'ingreso' ? 'text-brand-violet' : 'text-brand-pink'}`}>
                 {tx.type === 'ingreso' ? '+' : '-'}${Number(tx.amount).toLocaleString('es-AR')}
               </p>
             </div>

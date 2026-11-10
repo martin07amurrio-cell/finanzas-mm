@@ -1,0 +1,16 @@
+node_modules
+.git
+.github
+dist
+.env
+.env.*
+**/.env
+**/.env.*
+**/__pycache__
+**/*.pyc
+*.dump
+backups
+**/backups
+secrets
+**/secrets
+*.log

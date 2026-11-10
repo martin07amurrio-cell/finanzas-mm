@@ -50,8 +50,8 @@ export function Reportes() {
 
   // 2. Datos para gráfico de barras Comparativa (Ingresos vs Gastos)
   const comparisonData = [
-    { name: 'Ingresos', Monto: totalIncome, fill: '#2ECC71' },
-    { name: 'Gastos', Monto: totalExpense, fill: '#FF4757' }
+    { name: 'Ingresos', Monto: totalIncome, fill: '#8B5CF6' },
+    { name: 'Gastos', Monto: totalExpense, fill: '#EC4899' }
   ]
 
   // 3. Datos para el gráfico de torta de Gastos por Categoría
@@ -61,7 +61,7 @@ export function Reportes() {
     .filter(t => t.type === 'gasto')
     .forEach(tx => {
       const catName = tx.category?.name || 'Otros'
-      const catColor = tx.category?.color || '#95A5A6'
+      const catColor = tx.category?.color || '#A78BFA'
       if (!expenseByCategory[catName]) {
         expenseByCategory[catName] = { name: catName, value: 0, color: catColor }
       }
@@ -140,15 +140,15 @@ export function Reportes() {
           <div className="grid grid-cols-3 gap-3">
             <div className="bg-card p-3 rounded-2xl border border-border text-center space-y-1">
               <p className="text-[10px] text-muted-foreground font-bold uppercase">Ingresos</p>
-              <p className="text-brand-green font-bold text-sm">+${totalIncome.toLocaleString('es-AR')}</p>
+              <p className="text-brand-violet font-bold text-sm">+${totalIncome.toLocaleString('es-AR')}</p>
             </div>
             <div className="bg-card p-3 rounded-2xl border border-border text-center space-y-1">
               <p className="text-[10px] text-muted-foreground font-bold uppercase">Gastos</p>
-              <p className="text-brand-coral font-bold text-sm">-${totalExpense.toLocaleString('es-AR')}</p>
+              <p className="text-brand-pink font-bold text-sm">-${totalExpense.toLocaleString('es-AR')}</p>
             </div>
             <div className="bg-card p-3 rounded-2xl border border-border text-center space-y-1">
               <p className="text-[10px] text-muted-foreground font-bold uppercase">Balance</p>
-              <p className={`font-bold text-sm ${balance >= 0 ? 'text-brand-green' : 'text-brand-coral'}`}>
+              <p className={`font-bold text-sm ${balance >= 0 ? 'text-brand-violet' : 'text-brand-pink'}`}>
                 {balance >= 0 ? '+' : ''}${balance.toLocaleString('es-AR')}
               </p>
             </div>
@@ -160,8 +160,8 @@ export function Reportes() {
             <div className="h-64 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={comparisonData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <XAxis dataKey="name" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
-                  <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                  <XAxis dataKey="name" stroke="#5b5261" fontSize={12} tickLine={false} axisLine={false} />
+                  <YAxis stroke="#5b5261" fontSize={12} tickLine={false} axisLine={false} />
                   <Tooltip 
                     cursor={{ fill: 'rgba(0,0,0,0.02)' }}
                     formatter={(value) => [`$${Number(value).toLocaleString('es-AR')}`, 'Monto']}

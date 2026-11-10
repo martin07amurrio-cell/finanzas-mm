@@ -119,7 +119,7 @@ export function Cargar({ onNavigateToTab }: CargarProps) {
   if (success) {
     return (
       <div className="w-full max-w-sm mx-auto text-center space-y-6 py-12 animate-in zoom-in duration-300">
-        <div className="w-20 h-20 bg-brand-green/10 rounded-full flex items-center justify-center mx-auto text-brand-green">
+        <div className="w-20 h-20 bg-brand-violet/10 rounded-full flex items-center justify-center mx-auto text-brand-violet">
           <CheckCircle2 className="w-12 h-12" />
         </div>
         <div className="space-y-2">
@@ -178,11 +178,11 @@ export function Cargar({ onNavigateToTab }: CargarProps) {
           {/* Tipo de Transacción Toggle */}
           <div className="grid grid-cols-3 p-1 bg-secondary rounded-2xl">
             <button type="button" onClick={() => setType('gasto')}
-              className={`py-2.5 rounded-xl text-sm font-bold transition-all ${type === 'gasto' ? 'bg-brand-coral text-white shadow-md' : 'text-muted-foreground'}`}>
+              className={`py-2.5 rounded-xl text-sm font-bold transition-all ${type === 'gasto' ? 'bg-brand-pink text-white shadow-md' : 'text-muted-foreground'}`}>
               Gasto
             </button>
             <button type="button" onClick={() => setType('ingreso')}
-              className={`py-2.5 rounded-xl text-sm font-bold transition-all ${type === 'ingreso' ? 'bg-brand-green text-white shadow-md' : 'text-muted-foreground'}`}>
+              className={`py-2.5 rounded-xl text-sm font-bold transition-all ${type === 'ingreso' ? 'bg-brand-violet text-white shadow-md' : 'text-muted-foreground'}`}>
               Ingreso
             </button>
             <button type="button" onClick={() => setType('reserva')}
@@ -199,7 +199,7 @@ export function Cargar({ onNavigateToTab }: CargarProps) {
                 Depositar
               </button>
               <button type="button" onClick={() => setReservaAction('retirar')}
-                className={`py-2 rounded-xl text-xs font-bold transition-all ${reservaAction === 'retirar' ? 'bg-brand-coral text-white shadow-md' : 'text-muted-foreground'}`}>
+                className={`py-2 rounded-xl text-xs font-bold transition-all ${reservaAction === 'retirar' ? 'bg-brand-pink text-white shadow-md' : 'text-muted-foreground'}`}>
                 Retirar
               </button>
             </div>

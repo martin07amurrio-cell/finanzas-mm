@@ -1,0 +1,78 @@
+# Portátil entre el VPS temporal de D3S y el VPS futuro de NEROHM.
+# NO reutiliza la red, contenedores ni base de datos de JARVIS.
+name: hogar-mm
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: hogar_mm
+      POSTGRES_USER: hogar_mm
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+      TZ: America/Argentina/Cordoba
+    secrets:
+      - db_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      # Solo se ejecuta cuando el volumen PostgreSQL está vacío.
+      - ../backend/schema.sql:/docker-entrypoint-initdb.d/001-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hogar_mm -d hogar_mm"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - hogar_private
+
+  api:
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile
+    restart: unless-stopped
+    environment:
+      FINANZAS_DB_HOST: db
+      FINANZAS_DB_PORT: "5432"
+      FINANZAS_DB_NAME: hogar_mm
+      FINANZAS_DB_USER: hogar_mm
+      FINANZAS_DB_PASSWORD_FILE: /run/secrets/db_password
+      FINANZAS_AUTH_SECRET_FILE: /run/secrets/auth_secret
+      FINANZAS_TOKEN_TTL_SECONDS: "604800"
+      CORS_ORIGINS: "https://hogarchito.nerohm.com.ar"
+      TZ: America/Argentina/Cordoba
+    secrets:
+      - db_password
+      - auth_secret
+    depends_on:
+      db:
+        condition: service_healthy
+    expose:
+      - "8000"
+    networks:
+      - hogar_private
+
+  web:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.web
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      # El proxy HTTPS existente de D3S es el único punto de entrada público.
+      - "127.0.0.1:${HOGAR_HTTP_PORT:-8035}:80"
+    networks:
+      - hogar_private
+
+volumes:
+  postgres_data:
+
+networks:
+  hogar_private:
+    driver: bridge
+
+secrets:
+  db_password:
+    file: ${HOGAR_SECRETS_DIR:?Configurar HOGAR_SECRETS_DIR}/db_password
+  auth_secret:
+    file: ${HOGAR_SECRETS_DIR:?Configurar HOGAR_SECRETS_DIR}/auth_secret
