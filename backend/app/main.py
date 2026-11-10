@@ -27,7 +27,7 @@ DB_USER = os.getenv("FINANZAS_DB_USER", "finanzas_mm")
 DB_PASSWORD_FILE = os.getenv("FINANZAS_DB_PASSWORD_FILE", "/secrets/postgres_password")
 
 
-app = FastAPI(title="Finanzas MM API", version="0.4.0")
+app = FastAPI(title="Hogarchito API", version="0.4.0")
 app.include_router(hogar_router)
 
 app.add_middleware(
