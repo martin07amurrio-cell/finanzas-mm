@@ -99,7 +99,7 @@ export function Hogar({ initialSection = 'agenda', onNavigate }: {
 
   return <div className="w-full space-y-5 pb-24">
     <header className="space-y-1">
-      <p className="text-xs font-bold tracking-widest uppercase text-primary">Hogar M&M</p>
+      <p className="text-xs font-bold tracking-widest uppercase text-primary">Hogarchito</p>
       <h1 className="text-2xl font-bold">Organización familiar</h1>
       <p className="text-sm text-muted-foreground">Agenda, compras, comidas, limpieza y metas en un mismo lugar.</p>
     </header>
