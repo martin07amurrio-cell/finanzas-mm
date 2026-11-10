@@ -164,7 +164,7 @@ export function Movimientos() {
                       <div className="flex items-center space-x-3">
                         <div
                           className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white shadow-sm flex-shrink-0"
-                          style={{ backgroundColor: tx.category?.color || '#3498DB' }}
+                          style={{ backgroundColor: tx.category?.color || '#8B5CF6' }}
                         >
                           {tx.category?.name.charAt(0) || 'T'}
                         </div>
@@ -185,7 +185,7 @@ export function Movimientos() {
 
                       <div className="flex items-center space-x-3">
                         <div className="text-right">
-                          <p className={`font-bold text-sm ${tx.type === 'ingreso' ? 'text-brand-green' : 'text-brand-coral'}`}>
+                          <p className={`font-bold text-sm ${tx.type === 'ingreso' ? 'text-brand-violet' : 'text-brand-pink'}`}>
                             {tx.type === 'ingreso' ? '+' : '-'}${Number(tx.amount).toLocaleString('es-AR')}
                             <span className="text-[10px] ml-0.5">{tx.currency}</span>
                           </p>
