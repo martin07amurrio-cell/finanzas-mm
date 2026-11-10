@@ -17,27 +17,28 @@ export function Navbar({ activeTab, onTabChange }: NavbarProps) {
   ]
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border px-2 pb-8 pt-3 flex justify-between items-center z-50">
-      {tabs.map((tab) => (
-        <button
-          key={tab.id}
-          onClick={() => onTabChange(tab.id)}
-          className={`flex flex-col items-center space-y-1 transition-all min-w-0 ${
-            activeTab === tab.id 
-              ? 'text-primary scale-110' 
-              : 'text-muted-foreground hover:text-foreground'
-          }`}
-        >
-          {tab.primary ? (
-            <div className="bg-primary text-primary-foreground p-3 rounded-full -mt-10 shadow-lg active:scale-90 transition-transform">
-              <tab.icon className="w-6 h-6" />
-            </div>
-          ) : (
-            <tab.icon className="w-5 h-5" />
-          )}
-          <span className="text-[10px] font-medium">{tab.label}</span>
-        </button>
-      ))}
+    <nav aria-label="Navegación principal" className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-between gap-1 border-t border-white/10 bg-brand-ink px-3 pb-7 pt-3 shadow-[0_-8px_35px_-18px_rgba(23,18,28,0.65)]">
+      {tabs.map((tab) => {
+        const selected = activeTab === tab.id
+        return (
+          <button
+            key={tab.id}
+            type="button"
+            aria-current={selected ? 'page' : undefined}
+            onClick={() => onTabChange(tab.id)}
+            className={`flex min-w-0 flex-1 flex-col items-center gap-1 rounded-xl py-1 text-center transition-all focus-visible:outline-2 focus-visible:outline-brand-rose ${selected ? 'text-brand-rose' : 'text-white/70 hover:text-white'}`}
+          >
+            {tab.primary ? (
+              <span className="mb-1 -mt-9 rounded-full border-4 border-brand-ink bg-primary p-3 text-white shadow-lg shadow-primary/25 transition-transform active:scale-95">
+                <tab.icon className="h-6 w-6" aria-hidden="true" />
+              </span>
+            ) : (
+              <tab.icon className="h-5 w-5" aria-hidden="true" />
+            )}
+            <span className="text-[10px] font-semibold leading-none">{tab.label}</span>
+          </button>
+        )
+      })}
     </nav>
   )
 }
