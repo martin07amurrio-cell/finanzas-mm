@@ -1,4 +1,4 @@
-# Hogar M&M
+# Hogarchito
 
 Aplicación familiar compartida para dos usuarios, con organización diaria, finanzas, supermercado, despensa, recetas, menú, limpieza y objetivos.
 
@@ -6,10 +6,10 @@ Aplicación familiar compartida para dos usuarios, con organización diaria, fin
 - Interfaz: React, Vite, TypeScript y Tailwind CSS.
 - API: Python y FastAPI.
 - Datos: PostgreSQL.
-- Autenticación: PIN de seis dígitos con PBKDF2 y secreto de sesión del servidor.
+- Autenticación: PIN de cuatro dígitos con PBKDF2 y secreto de sesión del servidor.
 
 ## Estado
-- Desarrollo en `desarrollo/hogar-mm`. No desplegado.
+- Desplegado en `https://hogarchito.nerohm.com.ar` desde la rama `desarrollo/hogar-mm`.
 - El backend financiero original y módulos familiares conviven en la misma base PostgreSQL.
 - Las integraciones históricas con Firebase y Telegram siguen en el repositorio, pero **no** son necesarias para la aplicación web en esta versión.
 
@@ -18,7 +18,7 @@ Aplicación familiar compartida para dos usuarios, con organización diaria, fin
 2. Aplicar `backend/schema.sql` con `psql -v ON_ERROR_STOP=1 -f backend/schema.sql`. Incluye finanzas y hogar.
 3. Crear archivos de secretos **fuera del repositorio** para PostgreSQL (`FINANZAS_DB_PASSWORD_FILE`) y firma de sesiones (`FINANZAS_AUTH_SECRET_FILE`).
 4. Instalar dependencias Python de `backend/requirements.txt`, definir `FINANZAS_DB_*` e iniciar FastAPI con `uvicorn app.main:app --app-dir backend`.
-5. Crear los dos usuarios (sin publicar ni compartir PIN): `PYTHONPATH=backend python backend/scripts/bootstrap_user.py --user "Martín"` y `--user "Micaela"`. Cada PIN debe ser de seis dígitos.
+5. Crear los dos usuarios (sin publicar ni compartir PIN): `PYTHONPATH=backend python backend/scripts/bootstrap_user.py --user "Martín"` y `--user "Micaela"`. Cada PIN debe ser de cuatro dígitos.
 6. Instalar dependencias frontend (`npm ci`), configurar `VITE_API_BASE_URL` si la API se sirve en distinto origen y generar (`npm run build`).
 7. Configurar HTTPS, proxy y `CORS_ORIGINS` exclusivamente con los orígenes autorizados; verificar login, compras, despensa, tareas, limpieza, objetivos y finanzas en dos dispositivos.
 8. Configurar backup PostgreSQL cifrado y restauración verificada antes de usar datos reales.
