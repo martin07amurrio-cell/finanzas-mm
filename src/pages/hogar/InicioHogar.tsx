@@ -27,7 +27,7 @@ export function InicioHogar({ onNavigate }: Props) {
   return <div className="w-full space-y-5 pb-24">
     <header className="space-y-1"><p className="text-xs font-bold uppercase tracking-widest text-primary">Hogarchito</p><h1 className="text-2xl font-bold">Hola, {name}</h1><p className="text-sm text-muted-foreground">Todo lo importante de la casa, en un lugar.</p></header>
     {error && <div role="alert" className="rounded-xl border border-destructive/30 p-3 text-sm text-destructive">{error}</div>}
-    <section className="hogarchito-hero rounded-3xl p-5 text-white">
+    <section className="hogarchito-hero rounded-3xl p-5 text-brand-ink">
       <p className="text-xs opacity-80">Resumen familiar</p>
       <h2 className="text-2xl font-bold mt-1">{pending.length} pendientes</h2>
       <p className="text-xs mt-2 opacity-90">{pending.filter(i => i.due_on && i.due_on < today).length} vencidos · {pending.filter(i => i.due_on === today).length} para hoy</p>
