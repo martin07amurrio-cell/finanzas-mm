@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Delete, Lock } from 'lucide-react'
+import { Delete, HouseHeart, Lock } from 'lucide-react'
 
 interface PinEntryProps {
   userName: string
@@ -28,8 +28,9 @@ export function PinEntry({ userName, onBack, onComplete, error }: PinEntryProps)
   }, [error])
 
   return (
-    <div className="flex flex-col items-center justify-center space-y-10 animate-in slide-in-from-right duration-300">
+    <div className="flex w-full max-w-sm flex-col items-center justify-center space-y-8 animate-in slide-in-from-right duration-300">
       <div className="text-center space-y-2">
+        <div className="mb-5 flex items-center justify-center gap-2 text-sm font-bold tracking-wide text-brand-violet"><HouseHeart className="h-5 w-5" aria-hidden="true" /> Hogarchito</div>
         <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
           <Lock className="w-8 h-8 text-primary" />
         </div>
@@ -37,7 +38,7 @@ export function PinEntry({ userName, onBack, onComplete, error }: PinEntryProps)
         <p className="text-muted-foreground">Ingresá tu PIN de 4 dígitos</p>
       </div>
 
-      <div className="flex space-x-4">
+      <div className="flex space-x-4 rounded-2xl bg-card px-5 py-4 border border-border">
         {[0, 1, 2, 3].map(i => (
           <div
             key={i}
@@ -55,7 +56,7 @@ export function PinEntry({ userName, onBack, onComplete, error }: PinEntryProps)
           <button
             key={num}
             onClick={() => handleNumber(num.toString())}
-            className="h-16 w-16 rounded-full flex items-center justify-center text-2xl font-semibold bg-secondary hover:bg-secondary/80 active:scale-90 transition-all shadow-sm"
+            className="h-16 w-16 rounded-2xl flex items-center justify-center text-2xl font-semibold bg-secondary hover:bg-secondary/80 active:scale-90 transition-all shadow-sm"
           >
             {num}
           </button>
@@ -68,7 +69,7 @@ export function PinEntry({ userName, onBack, onComplete, error }: PinEntryProps)
         </button>
         <button
           onClick={() => handleNumber('0')}
-          className="h-16 w-16 rounded-full flex items-center justify-center text-2xl font-semibold bg-secondary hover:bg-secondary/80 active:scale-90 transition-all shadow-sm"
+          className="h-16 w-16 rounded-2xl flex items-center justify-center text-2xl font-semibold bg-secondary hover:bg-secondary/80 active:scale-90 transition-all shadow-sm"
         >
           0
         </button>
