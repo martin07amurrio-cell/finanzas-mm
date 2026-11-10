@@ -113,7 +113,11 @@ async function apiPostPublic<T>(path: string, body: unknown): Promise<T> {
   })
 
   if (!response.ok) {
-    throw new Error(`Error de autenticación: ${response.status}`)
+    throw new Error(response.status === 429
+      ? 'Demasiados intentos. Volvé a probar en una hora.'
+      : response.status === 401
+        ? 'Usuario o PIN incorrecto.'
+        : 'No se pudo iniciar sesión. Intentá nuevamente.')
   }
 
   return response.json() as Promise<T>
