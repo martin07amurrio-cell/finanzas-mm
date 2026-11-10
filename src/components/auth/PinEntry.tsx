@@ -12,7 +12,7 @@ export function PinEntry({ userName, onBack, onComplete, error }: PinEntryProps)
   const [pin, setPin] = useState('')
 
   const handleNumber = (num: string) => {
-    if (pin.length < 6) {
+    if (pin.length < 4) {
       setPin(prev => prev + num)
     }
   }
@@ -34,11 +34,11 @@ export function PinEntry({ userName, onBack, onComplete, error }: PinEntryProps)
           <Lock className="w-8 h-8 text-primary" />
         </div>
         <h2 className="text-2xl font-bold">Hola, {userName}</h2>
-        <p className="text-muted-foreground">Ingresá tu PIN de 6 dígitos</p>
+        <p className="text-muted-foreground">Ingresá tu PIN de 4 dígitos</p>
       </div>
 
       <div className="flex space-x-4">
-        {[0, 1, 2, 3, 4, 5].map(i => (
+        {[0, 1, 2, 3].map(i => (
           <div
             key={i}
             className={`w-4 h-4 rounded-full border-2 transition-all duration-200 ${
@@ -81,7 +81,7 @@ export function PinEntry({ userName, onBack, onComplete, error }: PinEntryProps)
       </div>
       <button
         type="button"
-        disabled={pin.length !== 6}
+        disabled={pin.length !== 4}
         onClick={() => onComplete(pin)}
         className="w-full max-w-xs rounded-xl bg-primary px-5 py-3 text-primary-foreground font-semibold disabled:opacity-40"
       >
