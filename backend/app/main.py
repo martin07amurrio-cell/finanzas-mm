@@ -14,9 +14,7 @@ from app.hogar import router as hogar_router
 
 from app.auth import (
     check_login_rate_limit,
-    clear_login_failures,
     create_session_token,
-    register_failed_login,
     require_auth,
     verify_pin,
 )
@@ -346,10 +344,7 @@ def login(payload: LoginRequest, request: Request):
             rows = rows_to_dicts(cur)
 
     if not rows or not verify_pin(rows[0].get("pin_hash"), pin):
-        register_failed_login(request, user_name)
         raise HTTPException(status_code=401, detail="Usuario o PIN incorrecto")
-
-    clear_login_failures(request, user_name)
 
     user = rows[0]
     token = create_session_token(user)
