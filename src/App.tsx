@@ -59,10 +59,10 @@ function App() {
       localStorage.setItem('auth_user', JSON.stringify(session.user))
       localStorage.setItem('auth_token', session.token)
       setState('dashboard')
-    } catch {
+    } catch (error) {
       localStorage.removeItem('auth_user')
       localStorage.removeItem('auth_token')
-      setError('PIN incorrecto. Intenta de nuevo.')
+      setError(error instanceof Error ? error.message : 'No se pudo iniciar sesión.')
     }
   }
 
